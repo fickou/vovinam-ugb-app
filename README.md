@@ -2,7 +2,7 @@
 
 Bienvenue dans le projet **Vovinam UGB Reminders**. Cette application est conçue pour gérer les membres, les saisons et les paiements d'un club de Vovinam Viet Vo Dao.
 
-Cette version spécifique (située dans le dossier `copie`) est une architecture autonome utilisant **PHP** pour le backend et **MySQL** pour la base de données, remplaçant l'ancienne architecture basée sur Supabase.
+Cette version spécifique est une architecture autonome utilisant **PHP** pour le backend et **MySQL** pour la base de données.
 
 ---
 
@@ -93,4 +93,4 @@ Si vous venez de l'ancienne version Supabase :
 ---
 
 ## 👤 Auteur
-Projet développé pour le club Vovinam UGB.
+Projet développé par fickou.dev pour le club Vovinam UGB SC.
