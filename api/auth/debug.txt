@@ -1,0 +1,1 @@
+{"email":"daoudafickou03@gmail.com","password":"123456","first_name":"DAOUDA","last_name":"FICKOU"}

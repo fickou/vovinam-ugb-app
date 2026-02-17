@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 50% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 50% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 50% 15%;
+
+    --primary: 220 60% 20%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 80% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 20% 95%;
+    --muted-foreground: 220 15% 45%;
+
+    --accent: 0 80% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 85%;
+    --input: 220 20% 85%;
+    --ring: 220 60% 20%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors for the poster */
+    --navy: 220 60% 18%;
+    --navy-light: 220 50% 25%;
+    --red-martial: 0 80% 45%;
+    --red-martial-light: 0 70% 55%;
+    --gold-accent: 45 90% 55%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 60% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 50% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 50% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 60% 20%;
+
+    --secondary: 0 80% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 30% 18%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 0 80% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 30% 22%;
+    --input: 220 30% 22%;
+    --ring: 0 0% 83.9%;
+    
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Oswald', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Oswald', sans-serif;
+  }
+  
+  .font-body {
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    body {
+      background: white !important;
+    }
+
+    .print-title {
+      display: block !important;
+      font-size: 24pt !important;
+      margin-bottom: 20px !important;
+      text-align: center !important;
+    }
+    
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+    
+    th, td {
+      border: 1px solid #ddd !important;
+      padding: 8px !important;
+    }
+  }
+}
