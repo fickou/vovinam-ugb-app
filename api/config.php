@@ -34,7 +34,7 @@ if (!defined('SMS_PROVIDER')) {
 // TRACCAR SMS GATEWAY CONFIG (App: "Traccar SMS Gateway")
 // Google Play: https://play.google.com/store/apps/details?id=org.traccar.gateway
 // Default Port is usually 8082
-define('TRACCAR_URL', 'http://192.168.1.53:8082'); 
+define('TRACCAR_URL', 'http://192.168.1.30:8082'); 
 define('TRACCAR_TOKEN', 'd9062c79-5ec1-426d-b02e-4b9d83842d45'); // Optional: Set in app settings if needed
 define('TRACCAR_SIM_SLOT', null); // 0 pour SIM 1, 1 pour SIM 2
 
