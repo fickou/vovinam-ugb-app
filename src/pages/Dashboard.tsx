@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CreditCard, Calendar, AlertTriangle, Wallet } from 'lucide-react';
-import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -9,7 +9,6 @@ interface Stats {
   totalMembers: number;
   activeMembers: number;
   totalPayments: number;
-  unpaidAmount: number;
   activeSeason: string | null;
 }
 
@@ -18,7 +17,6 @@ export default function Dashboard() {
     totalMembers: 0,
     activeMembers: 0,
     totalPayments: 0,
-    unpaidAmount: 0,
     activeSeason: null,
   });
   const [loading, setLoading] = useState(true);
@@ -32,8 +30,21 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const data = await api.get('/dashboard.php');
-      setStats(data);
+      const [membersRes, paymentsRes, seasonRes] = await Promise.all([
+        supabase.from('members').select('id, status'),
+        supabase.from('payments').select('amount').eq('status', 'VALIDATED'),
+        supabase.from('seasons').select('name').eq('is_active', true).maybeSingle(),
+      ]);
+
+      const members = membersRes.data || [];
+      const payments = paymentsRes.data || [];
+
+      setStats({
+        totalMembers: members.length,
+        activeMembers: members.filter(m => m.status === 'active').length,
+        totalPayments: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
+        activeSeason: seasonRes.data?.name || null,
+      });
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {

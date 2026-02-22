@@ -1,33 +1,19 @@
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Users2, Shield, Pencil, Trash2, Plus, UserPlus } from 'lucide-react';
+import { Users2, Pencil, Trash2, Plus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -37,11 +23,7 @@ interface BoardMember {
     member_id: string;
     season_id: string;
     position: string;
-    first_name: string;
-    last_name: string;
-    email: string | null;
-    phone: string | null;
-    member_number: string | null;
+    members: { first_name: string; last_name: string; email: string | null; phone: string | null; member_number: string | null } | null;
 }
 
 interface Member {
@@ -66,135 +48,84 @@ export default function BoardMembers() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [selectedBoardMember, setSelectedBoardMember] = useState<BoardMember | null>(null);
-
-    const [addFormData, setAddFormData] = useState({
-        member_id: '',
-        position: '',
-    });
-
-    const [editFormData, setEditFormData] = useState({
-        position: '',
-    });
-
+    const [addFormData, setAddFormData] = useState({ member_id: '', position: '' });
+    const [editFormData, setEditFormData] = useState({ position: '' });
     const { toast } = useToast();
     const { isAdmin } = useAuth();
 
     useEffect(() => {
-        fetchSeasons();
-        fetchMembers();
+        Promise.all([
+            supabase.from('seasons').select('*').order('start_date', { ascending: false }),
+            supabase.from('members').select('id, first_name, last_name, member_number').eq('status', 'active').order('last_name'),
+        ]).then(([seasonsRes, membersRes]) => {
+            const seasonsData = seasonsRes.data || [];
+            setSeasons(seasonsData);
+            setMembers(membersRes.data || []);
+            const active = seasonsData.find(s => s.is_active);
+            if (active) setSelectedSeasonId(active.id);
+            else if (seasonsData.length > 0) setSelectedSeasonId(seasonsData[0].id);
+        });
     }, []);
 
     useEffect(() => {
-        if (selectedSeasonId) {
-            fetchBoardMembers();
-        }
+        if (selectedSeasonId) fetchBoardMembers();
     }, [selectedSeasonId]);
-
-    const fetchSeasons = async () => {
-        try {
-            const data = await api.get('/seasons.php');
-            setSeasons(data || []);
-            const active = data?.find((s: Season) => s.is_active);
-            if (active) setSelectedSeasonId(active.id);
-            else if (data?.length > 0) setSelectedSeasonId(data[0].id);
-        } catch (error) {
-            console.error('Error fetching seasons:', error);
-        }
-    };
-
-    const fetchMembers = async () => {
-        try {
-            const data = await api.get('/members.php?status=active');
-            setMembers(data || []);
-        } catch (error) {
-            console.error('Error fetching members:', error);
-        }
-    };
 
     const fetchBoardMembers = async () => {
         setLoading(true);
-        try {
-            const data = await api.get(`/board_members.php?season_id=${selectedSeasonId}`);
-            setBoardMembers(data || []);
-        } catch (error) {
-            console.error('Error fetching board members:', error);
-            toast({
-                title: 'Erreur',
-                description: 'Impossible de charger les membres du bureau',
-                variant: 'destructive',
-            });
-        } finally {
-            setLoading(false);
+        const { data, error } = await supabase
+            .from('board_members')
+            .select('*, members(first_name, last_name, email, phone, member_number)')
+            .eq('season_id', selectedSeasonId)
+            .order('position');
+
+        if (error) {
+            toast({ title: 'Erreur', description: 'Impossible de charger les membres du bureau', variant: 'destructive' });
+        } else {
+            setBoardMembers((data as BoardMember[]) || []);
         }
+        setLoading(false);
     };
 
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            await api.post('/board_members.php', {
-                ...addFormData,
-                season_id: selectedSeasonId
-            });
-            toast({
-                title: 'Succès',
-                description: 'Membre ajouté au bureau',
-            });
+        const { error } = await supabase.from('board_members').insert({
+            member_id: addFormData.member_id,
+            position: addFormData.position,
+            season_id: selectedSeasonId,
+        });
+
+        if (error) {
+            toast({ title: 'Erreur', description: 'Impossible d\'ajouter ce membre', variant: 'destructive' });
+        } else {
+            toast({ title: 'Succès', description: 'Membre ajouté au bureau' });
             setIsAddDialogOpen(false);
             setAddFormData({ member_id: '', position: '' });
             fetchBoardMembers();
-        } catch (error) {
-            toast({
-                title: 'Erreur',
-                description: 'Impossible d\'ajouter ce membre',
-                variant: 'destructive',
-            });
         }
-    };
-
-    const handleEditClick = (member: BoardMember) => {
-        setSelectedBoardMember(member);
-        setEditFormData({ position: member.position });
-        setIsEditDialogOpen(true);
     };
 
     const handleEditSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedBoardMember) return;
-        try {
-            await api.put('/board_members.php', {
-                id: selectedBoardMember.id,
-                position: editFormData.position
-            });
-            toast({
-                title: 'Succès',
-                description: 'Position mise à jour',
-            });
+        const { error } = await supabase.from('board_members').update({ position: editFormData.position }).eq('id', selectedBoardMember.id);
+
+        if (error) {
+            toast({ title: 'Erreur', description: 'Échec de la mise à jour', variant: 'destructive' });
+        } else {
+            toast({ title: 'Succès', description: 'Position mise à jour' });
             setIsEditDialogOpen(false);
             fetchBoardMembers();
-        } catch (error) {
-            toast({
-                title: 'Erreur',
-                description: 'Échec de la mise à jour',
-                variant: 'destructive',
-            });
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Voulez-vous vraiment retirer ce membre du bureau ?')) return;
-        try {
-            await api.delete(`/board_members.php?id=${id}`);
-            toast({
-                title: 'Succès',
-                description: 'Membre retiré du bureau',
-            });
+        const { error } = await supabase.from('board_members').delete().eq('id', id);
+        if (error) {
+            toast({ title: 'Erreur', description: 'Échec de la suppression', variant: 'destructive' });
+        } else {
+            toast({ title: 'Succès', description: 'Membre retiré du bureau' });
             fetchBoardMembers();
-        } catch (error) {
-            toast({
-                title: 'Erreur',
-                description: 'Échec de la suppression',
-                variant: 'destructive',
-            });
         }
     };
 
@@ -208,24 +139,14 @@ export default function BoardMembers() {
                     </div>
                     <div className="flex items-center gap-4">
                         <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Saison" />
-                            </SelectTrigger>
+                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Saison" /></SelectTrigger>
                             <SelectContent>
-                                {seasons.map((season) => (
-                                    <SelectItem key={season.id} value={season.id}>
-                                        {season.name} {season.is_active && "(Actuelle)"}
-                                    </SelectItem>
-                                ))}
+                                {seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}{s.is_active && ' (Actuelle)'}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         {isAdmin && (
-                            <Button
-                                onClick={() => setIsAddDialogOpen(true)}
-                                className="bg-navy hover:bg-navy-light text-white gap-2"
-                            >
-                                <Plus className="h-4 w-4" />
-                                Nommer
+                            <Button onClick={() => setIsAddDialogOpen(true)} className="bg-navy hover:bg-navy-light text-white gap-2">
+                                <Plus className="h-4 w-4" />Nommer
                             </Button>
                         )}
                     </div>
@@ -234,17 +155,14 @@ export default function BoardMembers() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Users2 className="h-5 w-5" />
-                            Composition du bureau
+                            <Users2 className="h-5 w-5" />Composition du bureau
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {loading ? (
                             <div className="text-center py-8">Chargement...</div>
                         ) : boardMembers.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground italic">
-                                Aucun membre enregistré pour cette saison.
-                            </div>
+                            <div className="text-center py-12 text-muted-foreground italic">Aucun membre enregistré pour cette saison.</div>
                         ) : (
                             <Table>
                                 <TableHeader>
@@ -261,27 +179,18 @@ export default function BoardMembers() {
                                         <TableRow key={bm.id}>
                                             <TableCell className="font-bold text-navy">{bm.position}</TableCell>
                                             <TableCell>
-                                                <div className="font-medium">{bm.first_name} {bm.last_name}</div>
-                                                <div className="text-xs text-muted-foreground">{bm.member_number}</div>
+                                                <div className="font-medium">{bm.members?.first_name} {bm.members?.last_name}</div>
+                                                <div className="text-xs text-muted-foreground">{bm.members?.member_number}</div>
                                             </TableCell>
-                                            <TableCell className="text-sm">{bm.email || '-'}</TableCell>
-                                            <TableCell className="text-sm">{bm.phone || '-'}</TableCell>
+                                            <TableCell className="text-sm">{bm.members?.email || '-'}</TableCell>
+                                            <TableCell className="text-sm">{bm.members?.phone || '-'}</TableCell>
                                             {isAdmin && (
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleEditClick(bm)}
-                                                        >
+                                                        <Button variant="ghost" size="sm" onClick={() => { setSelectedBoardMember(bm); setEditFormData({ position: bm.position }); setIsEditDialogOpen(true); }}>
                                                             <Pencil className="h-4 w-4" />
                                                         </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-red-martial hover:bg-red-martial/10"
-                                                            onClick={() => handleDelete(bm.id)}
-                                                        >
+                                                        <Button variant="ghost" size="sm" className="text-red-martial hover:bg-red-martial/10" onClick={() => handleDelete(bm.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
@@ -298,38 +207,20 @@ export default function BoardMembers() {
                 {/* Add Dialog */}
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogContent className="max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Nommer un membre au bureau</DialogTitle>
-                        </DialogHeader>
+                        <DialogHeader><DialogTitle>Nommer un membre au bureau</DialogTitle></DialogHeader>
                         <form onSubmit={handleAddSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Pratiquant</Label>
-                                <Select
-                                    value={addFormData.member_id}
-                                    onValueChange={(val) => setAddFormData({ ...addFormData, member_id: val })}
-                                    required
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Choisir un membre" />
-                                    </SelectTrigger>
+                                <Select value={addFormData.member_id} onValueChange={(val) => setAddFormData({ ...addFormData, member_id: val })} required>
+                                    <SelectTrigger><SelectValue placeholder="Choisir un membre" /></SelectTrigger>
                                     <SelectContent>
-                                        {members.map(m => (
-                                            <SelectItem key={m.id} value={m.id}>
-                                                {m.first_name} {m.last_name} ({m.member_number})
-                                            </SelectItem>
-                                        ))}
+                                        {members.map(m => <SelectItem key={m.id} value={m.id}>{m.first_name} {m.last_name} ({m.member_number})</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="position">Poste / Fonction</Label>
-                                <Input
-                                    id="position"
-                                    placeholder="ex: Président, Trésorier Adjoint..."
-                                    value={addFormData.position}
-                                    onChange={(e) => setAddFormData({ ...addFormData, position: e.target.value })}
-                                    required
-                                />
+                                <Input id="position" placeholder="ex: Président, Trésorier Adjoint..." value={addFormData.position} onChange={(e) => setAddFormData({ ...addFormData, position: e.target.value })} required />
                             </div>
                             <DialogFooter>
                                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
@@ -342,24 +233,15 @@ export default function BoardMembers() {
                 {/* Edit Dialog */}
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                     <DialogContent className="max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Modifier la fonction</DialogTitle>
-                        </DialogHeader>
+                        <DialogHeader><DialogTitle>Modifier la fonction</DialogTitle></DialogHeader>
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Membre</Label>
-                                <div className="p-2 bg-muted rounded text-sm font-medium">
-                                    {selectedBoardMember?.first_name} {selectedBoardMember?.last_name}
-                                </div>
+                                <div className="p-2 bg-muted rounded text-sm font-medium">{selectedBoardMember?.members?.first_name} {selectedBoardMember?.members?.last_name}</div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="edit_position">Poste / Fonction</Label>
-                                <Input
-                                    id="edit_position"
-                                    value={editFormData.position}
-                                    onChange={(e) => setEditFormData({ ...editFormData, position: e.target.value })}
-                                    required
-                                />
+                                <Input id="edit_position" value={editFormData.position} onChange={(e) => setEditFormData({ position: e.target.value })} required />
                             </div>
                             <DialogFooter>
                                 <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>

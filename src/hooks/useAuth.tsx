@@ -1,86 +1,107 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
+import type { Session, User } from '@supabase/supabase-js';
 
 type AppRole = 'super_admin' | 'admin' | 'treasurer' | 'coach' | 'member';
 
-interface User {
-  id: number;
-  email: string;
-  roles?: AppRole[];
-}
-
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   roles: AppRole[];
   loading: boolean;
   isStaff: boolean;
   isAdmin: boolean;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchRoles = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (!error && data) {
+        setRoles(data.map((r) => r.role as AppRole));
+      } else if (error) {
+        console.error("Error fetching roles:", error);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching roles:", err);
+    }
+  };
+
   useEffect(() => {
-    const savedUser = localStorage.getItem('auth_user');
-    const savedRoles = localStorage.getItem('auth_roles');
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchRoles(session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
 
-    if (savedUser) setUser(JSON.parse(savedUser));
-    if (savedRoles) setRoles(JSON.parse(savedRoles));
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchRoles(session.user.id);
+      } else {
+        setRoles([]);
+      }
+    });
 
-    setLoading(false);
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    try {
-      await api.post('/auth/signup.php', {
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-      });
-      return { error: null };
-    } catch (error) {
-      return { error };
-    }
+    // We pass firstName and lastName in metadata (data property)
+    // The database trigger 'handle_new_user' will pick them up
+    // and create the corresponding profile and role automatically.
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        }
+      }
+    });
+    return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const data = await api.post('/auth/login.php', { email, password });
-
-      setUser(data.user);
-      setRoles(data.user.roles || []);
-
-      localStorage.setItem('auth_user', JSON.stringify(data.user));
-      localStorage.setItem('auth_roles', JSON.stringify(data.user.roles || []));
-
-      return { error: null };
-    } catch (error) {
-      return { error };
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error };
   };
 
-  const signOut = () => {
-    setUser(null);
+  const signOut = async () => {
+    await supabase.auth.signOut();
     setRoles([]);
-    localStorage.removeItem('auth_user');
-    localStorage.removeItem('auth_roles');
   };
 
-  const isStaff = roles.some(r => ['super_admin', 'admin', 'treasurer', 'coach'].includes(r));
-  const isAdmin = roles.some(r => ['super_admin', 'admin'].includes(r));
+  const isStaff = roles.some((r) => ['super_admin', 'admin', 'treasurer', 'coach'].includes(r));
+  const isAdmin = roles.some((r) => ['super_admin', 'admin'].includes(r));
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         roles,
         loading,
         isStaff,

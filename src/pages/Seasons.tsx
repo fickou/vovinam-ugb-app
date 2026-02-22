@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -57,31 +48,21 @@ export default function Seasons() {
   }, []);
 
   const fetchSeasons = async () => {
-    try {
-      const data = await api.get('/seasons.php');
+    const { data, error } = await supabase
+      .from('seasons')
+      .select('*')
+      .order('start_date', { ascending: false });
+
+    if (error) {
+      toast({ title: 'Erreur', description: 'Impossible de charger les saisons', variant: 'destructive' });
+    } else {
       setSeasons(data || []);
-    } catch (error) {
-      console.error('Error fetching seasons:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les saisons',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      start_date: '',
-      end_date: '',
-      registration_fee: 2000,
-      monthly_fee: 1000,
-      annual_total: 10000,
-      is_active: false,
-    });
+    setFormData({ name: '', start_date: '', end_date: '', registration_fee: 2000, monthly_fee: 1000, annual_total: 10000, is_active: false });
     setSelectedSeason(null);
   };
 
@@ -102,49 +83,30 @@ export default function Seasons() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      if (selectedSeason) {
-        await api.put('/seasons.php', {
-          ...formData,
-          id: selectedSeason.id,
-        });
-
-        toast({
-          title: 'Succès',
-          description: 'Saison modifiée avec succès',
-        });
-      } else {
-        await api.post('/seasons.php', formData);
-
-        toast({
-          title: 'Succès',
-          description: 'Saison ajoutée avec succès',
-        });
+    if (selectedSeason) {
+      const { error } = await supabase.from('seasons').update(formData).eq('id', selectedSeason.id);
+      if (error) {
+        toast({ title: 'Erreur', description: 'Impossible de modifier la saison', variant: 'destructive' });
+        return;
       }
-
-      setIsDialogOpen(false);
-      resetForm();
-      fetchSeasons();
-    } catch (error) {
-      console.error('Error saving season:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'enregistrer la saison',
-        variant: 'destructive',
-      });
+      toast({ title: 'Succès', description: 'Saison modifiée avec succès' });
+    } else {
+      const { error } = await supabase.from('seasons').insert(formData);
+      if (error) {
+        toast({ title: 'Erreur', description: 'Impossible d\'ajouter la saison', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Succès', description: 'Saison ajoutée avec succès' });
     }
+
+    setIsDialogOpen(false);
+    resetForm();
+    fetchSeasons();
   };
 
   const toggleActive = async (season: Season) => {
-    try {
-      await api.put('/seasons.php', {
-        ...season,
-        is_active: !season.is_active,
-      });
-      fetchSeasons();
-    } catch (error) {
-      console.error('Error toggling season status:', error);
-    }
+    const { error } = await supabase.from('seasons').update({ is_active: !season.is_active }).eq('id', season.id);
+    if (!error) fetchSeasons();
   };
 
   return (
@@ -156,10 +118,7 @@ export default function Seasons() {
             <p className="text-muted-foreground">Gérez les périodes sportives et les tarifs</p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button className="bg-navy hover:bg-navy-light">
                 <Plus className="h-4 w-4 mr-2" />
@@ -168,81 +127,39 @@ export default function Seasons() {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>
-                  {selectedSeason ? 'Modifier la saison' : 'Ajouter une saison'}
-                </DialogTitle>
+                <DialogTitle>{selectedSeason ? 'Modifier la saison' : 'Ajouter une saison'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nom de la saison (ex: 2023-2024)</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="2023-2024"
-                    required
-                  />
+                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="2023-2024" required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="start_date">Date de début</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      required
-                    />
+                    <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="end_date">Date de fin</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      required
-                    />
+                    <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="reg_fee">Frais d'inscription (FCFA)</Label>
-                    <Input
-                      id="reg_fee"
-                      type="number"
-                      value={formData.registration_fee}
-                      onChange={(e) => setFormData({ ...formData, registration_fee: parseInt(e.target.value) })}
-                      required
-                    />
+                    <Input id="reg_fee" type="number" value={formData.registration_fee} onChange={(e) => setFormData({ ...formData, registration_fee: parseInt(e.target.value) })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="monthly_fee">Mensualité (FCFA)</Label>
-                    <Input
-                      id="monthly_fee"
-                      type="number"
-                      value={formData.monthly_fee}
-                      onChange={(e) => setFormData({ ...formData, monthly_fee: parseInt(e.target.value) })}
-                      required
-                    />
+                    <Input id="monthly_fee" type="number" value={formData.monthly_fee} onChange={(e) => setFormData({ ...formData, monthly_fee: parseInt(e.target.value) })} required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="annual_total">Total annuel (forfait)</Label>
-                  <Input
-                    id="annual_total"
-                    type="number"
-                    value={formData.annual_total}
-                    onChange={(e) => setFormData({ ...formData, annual_total: parseInt(e.target.value) })}
-                    required
-                  />
+                  <Input id="annual_total" type="number" value={formData.annual_total} onChange={(e) => setFormData({ ...formData, annual_total: parseInt(e.target.value) })} required />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
+                  <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
                   <Label htmlFor="is_active">Saison active</Label>
                 </div>
                 <Button type="submit" className="w-full bg-navy hover:bg-navy-light">
@@ -284,34 +201,22 @@ export default function Seasons() {
                         {season.registration_fee.toLocaleString()} / {season.monthly_fee.toLocaleString()} FCFA
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          {season.is_active ? (
-                            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              <Circle className="h-3 w-3 mr-1" />
-                              Inactive
-                            </Badge>
-                          )}
-                        </div>
+                        {season.is_active ? (
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            <Circle className="h-3 w-3 mr-1" />Inactive
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleActive(season)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => toggleActive(season)}>
                             {season.is_active ? 'Désactiver' : 'Activer'}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditDialog(season)}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(season)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </div>
