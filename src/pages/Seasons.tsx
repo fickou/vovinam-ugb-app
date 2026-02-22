@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Calendar, Pencil, CheckCircle2, Circle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Season {
   id: string;
@@ -42,6 +43,7 @@ export default function Seasons() {
     is_active: false,
   });
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     fetchSeasons();
@@ -118,56 +120,58 @@ export default function Seasons() {
             <p className="text-muted-foreground">Gérez les périodes sportives et les tarifs</p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="bg-navy hover:bg-navy-light">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle saison
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{selectedSeason ? 'Modifier la saison' : 'Ajouter une saison'}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nom de la saison (ex: 2023-2024)</Label>
-                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="2023-2024" required />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date">Date de début</Label>
-                    <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date">Date de fin</Label>
-                    <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} required />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reg_fee">Frais d'inscription (FCFA)</Label>
-                    <Input id="reg_fee" type="number" value={formData.registration_fee} onChange={(e) => setFormData({ ...formData, registration_fee: parseInt(e.target.value) })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="monthly_fee">Mensualité (FCFA)</Label>
-                    <Input id="monthly_fee" type="number" value={formData.monthly_fee} onChange={(e) => setFormData({ ...formData, monthly_fee: parseInt(e.target.value) })} required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="annual_total">Total annuel (forfait)</Label>
-                  <Input id="annual_total" type="number" value={formData.annual_total} onChange={(e) => setFormData({ ...formData, annual_total: parseInt(e.target.value) })} required />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
-                  <Label htmlFor="is_active">Saison active</Label>
-                </div>
-                <Button type="submit" className="w-full bg-navy hover:bg-navy-light">
-                  {selectedSeason ? 'Modifier' : 'Ajouter'}
+          {isAdmin && (
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+              <DialogTrigger asChild>
+                <Button className="bg-navy hover:bg-navy-light">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle saison
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{selectedSeason ? 'Modifier la saison' : 'Ajouter une saison'}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nom de la saison (ex: 2023-2024)</Label>
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="2023-2024" required />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start_date">Date de début</Label>
+                      <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="end_date">Date de fin</Label>
+                      <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} required />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reg_fee">Frais d'inscription (FCFA)</Label>
+                      <Input id="reg_fee" type="number" value={formData.registration_fee} onChange={(e) => setFormData({ ...formData, registration_fee: parseInt(e.target.value) })} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="monthly_fee">Mensualité (FCFA)</Label>
+                      <Input id="monthly_fee" type="number" value={formData.monthly_fee} onChange={(e) => setFormData({ ...formData, monthly_fee: parseInt(e.target.value) })} required />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="annual_total">Total annuel (forfait)</Label>
+                    <Input id="annual_total" type="number" value={formData.annual_total} onChange={(e) => setFormData({ ...formData, annual_total: parseInt(e.target.value) })} required />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
+                    <Label htmlFor="is_active">Saison active</Label>
+                  </div>
+                  <Button type="submit" className="w-full bg-navy hover:bg-navy-light">
+                    {selectedSeason ? 'Modifier' : 'Ajouter'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         <Card>
@@ -187,7 +191,7 @@ export default function Seasons() {
                     <TableHead>Période</TableHead>
                     <TableHead>Tarifs (Insc. / Mens.)</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,16 +215,18 @@ export default function Seasons() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => toggleActive(season)}>
-                            {season.is_active ? 'Désactiver' : 'Activer'}
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(season)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => toggleActive(season)}>
+                              {season.is_active ? 'Désactiver' : 'Activer'}
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(season)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

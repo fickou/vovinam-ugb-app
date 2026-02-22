@@ -48,7 +48,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/dashboard/seasons" element={
-              <ProtectedRoute requireAdmin>
+              <ProtectedRoute requireStaff>
                 <Seasons />
               </ProtectedRoute>
             } />
@@ -73,7 +73,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/dashboard/reminders" element={
-              <ProtectedRoute requireAdmin>
+              <ProtectedRoute requireStaff>
                 <Reminders />
               </ProtectedRoute>
             } />
