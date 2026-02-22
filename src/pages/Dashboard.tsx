@@ -9,6 +9,8 @@ interface Stats {
   totalMembers: number;
   activeMembers: number;
   totalPayments: number;
+  totalExpenses: number;
+  netBalance: number;
   activeSeason: string | null;
 }
 
@@ -17,6 +19,8 @@ export default function Dashboard() {
     totalMembers: 0,
     activeMembers: 0,
     totalPayments: 0,
+    totalExpenses: 0,
+    netBalance: 0,
     activeSeason: null,
   });
   const [loading, setLoading] = useState(true);
@@ -30,19 +34,26 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const [membersRes, paymentsRes, seasonRes] = await Promise.all([
+      const [membersRes, paymentsRes, expensesRes, seasonRes] = await Promise.all([
         supabase.from('members').select('id, status'),
         supabase.from('payments').select('amount').eq('status', 'VALIDATED'),
+        supabase.from('expenses').select('amount'),
         supabase.from('seasons').select('name').eq('is_active', true).maybeSingle(),
       ]);
 
       const members = membersRes.data || [];
       const payments = paymentsRes.data || [];
+      const expenses = expensesRes.data || [];
+
+      const totalEncaissé = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      const totalDépensé = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
       setStats({
         totalMembers: members.length,
         activeMembers: members.filter(m => m.status === 'active').length,
-        totalPayments: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
+        totalPayments: totalEncaissé,
+        totalExpenses: totalDépensé,
+        netBalance: totalEncaissé - totalDépensé,
         activeSeason: seasonRes.data?.name || null,
       });
     } catch (error) {
@@ -71,7 +82,21 @@ export default function Dashboard() {
       title: 'Total Encaissé',
       value: `${stats.totalPayments.toLocaleString()} FCFA`,
       icon: CreditCard,
+      color: 'bg-green-600',
+      show: isStaff,
+    },
+    {
+      title: 'Total Dépenses',
+      value: `${stats.totalExpenses.toLocaleString()} FCFA`,
+      icon: Wallet,
       color: 'bg-red-martial',
+      show: isStaff,
+    },
+    {
+      title: 'Solde Net',
+      value: `${stats.netBalance.toLocaleString()} FCFA`,
+      icon: Wallet,
+      color: stats.netBalance >= 0 ? 'bg-navy' : 'bg-red-600',
       show: isStaff,
     },
     {

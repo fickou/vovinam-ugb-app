@@ -163,8 +163,16 @@ export default function Expenses() {
                             <Wallet className="h-4 w-4 text-red-500" />
                         </CardHeader>
                         <div className="px-6 pb-4">
-                            <div className="text-2xl font-bold text-red-600">{totalAmount.toLocaleString()} FCFA</div>
-                            <p className="text-xs text-muted-foreground">Sur la base des filtres actuels</p>
+                            {loading ? (
+                                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+                            ) : (
+                                <>
+                                    <div className="text-2xl font-bold text-red-600">
+                                        {totalAmount.toLocaleString('fr-FR')} FCFA
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Sur la base des filtres actuels</p>
+                                </>
+                            )}
                         </div>
                     </Card>
                 </div>

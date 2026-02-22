@@ -243,6 +243,23 @@ export default function Payments() {
             <p className="text-muted-foreground">Historique des transactions</p>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="bg-white border-green-100 shadow-sm transition-all hover:shadow-md">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Encaissé (Validé)</Label>
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="text-3xl font-bold text-green-600">
+                  {payments
+                    .filter(p => p.status === 'VALIDATED')
+                    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                    .toLocaleString('fr-FR')} FCFA
+                </div>
+              </div>
+            </Card>
+          </div>
+
           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button className="bg-navy hover:bg-navy-light">
