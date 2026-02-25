@@ -148,14 +148,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 bg-muted">
-          <header className="h-14 border-b border-border bg-background flex items-center px-4 gap-4 no-print">
+        <main className="flex-1 bg-muted flex flex-col min-w-0">
+          <header className="h-14 border-b border-border bg-background flex items-center px-4 md:px-6 gap-4 no-print sticky top-0 z-30">
             <SidebarTrigger>
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-navy" />
             </SidebarTrigger>
-            <h1 className="font-display text-lg font-semibold text-navy">Gestion du Club</h1>
+            <div className="flex items-center justify-between w-full">
+              <h1 className="font-display text-lg md:text-xl font-bold text-navy truncate">
+                Gestion du Club
+              </h1>
+              <div className="flex items-center gap-2 md:hidden">
+                <img src={vovinamLogo} alt="Logo" className="h-8 w-8 object-contain" />
+              </div>
+            </div>
           </header>
-          <div className="p-6">{children}</div>
+          <div className="p-4 md:p-6 lg:p-8 flex-1">
+            <div className="max-w-7xl mx-auto h-full">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
     </SidebarProvider>

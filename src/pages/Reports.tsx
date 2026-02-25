@@ -98,24 +98,24 @@ export default function Reports() {
             <h1 className="text-3xl font-display font-bold text-navy">Rapports & Statistiques</h1>
             <p className="text-muted-foreground">Analyse des données du club</p>
           </div>
-          <div className="flex items-center gap-4 no-print">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 no-print w-full sm:w-auto">
             <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Toutes les saisons" /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="w-full sm:w-[180px] rounded-lg h-10"><SelectValue placeholder="Toutes les saisons" /></SelectTrigger>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">Toutes les saisons</SelectItem>
                 {seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button onClick={() => window.print()} variant="outline" className="border-navy text-navy hover:bg-navy/5">
+            <Button onClick={() => window.print()} variant="outline" className="w-full sm:w-auto border-navy text-navy hover:bg-navy/5 rounded-lg h-10">
               <Printer className="h-4 w-4 mr-2" />Imprimer
             </Button>
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map(i => (
-              <Card key={i} className="animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <Card key={i} className="animate-pulse border-none shadow-sm rounded-xl overflow-hidden">
                 <CardHeader className="pb-2"><div className="h-4 bg-muted rounded w-1/2"></div></CardHeader>
                 <CardContent><div className="h-8 bg-muted rounded w-3/4"></div></CardContent>
               </Card>
@@ -123,117 +123,146 @@ export default function Reports() {
           </div>
         ) : (
           <>
-            <div className="hidden print:block mb-8 text-center pt-4 border-b pb-6">
-              <h1 className="text-2xl font-bold uppercase tracking-widest text-navy">Vovinam UGB Sporting Club</h1>
-              <h2 className="text-xl font-bold mt-2">RAPPORT D'ACTIVITÉ FINANCIÈRE</h2>
-              <p className="text-sm font-semibold mt-1">Saison : {selectedSeason === 'all' ? 'Toutes les saisons' : seasons.find(s => s.id === selectedSeason)?.name}</p>
-              <p className="text-xs text-muted-foreground mt-1">Généré le {new Date().toLocaleDateString('fr-FR')} à {new Date().toLocaleTimeString('fr-FR')}</p>
+            <div className="hidden print:block mb-8 text-center pt-8 border-b pb-8">
+              <h1 className="text-3xl font-display font-black uppercase tracking-tighter text-navy mb-2">Vovinam UGB Sporting Club</h1>
+              <div className="inline-block px-4 py-1 bg-navy text-white font-bold text-lg mb-4 rounded-md">RAPPORT D'ACTIVITÉ FINANCIÈRE</div>
+              <p className="text-sm font-semibold">Saison : {selectedSeason === 'all' ? 'Toutes les saisons' : seasons.find(s => s.id === selectedSeason)?.name}</p>
+              <p className="text-xs text-muted-foreground mt-2 italic">Document généré le {new Date().toLocaleDateString('fr-FR')} à {new Date().toLocaleTimeString('fr-FR')}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <Card className="border-none shadow-md rounded-xl overflow-hidden hover:scale-[1.02] transition-transform">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Pratiquants</CardTitle>
-                  <Users className="h-5 w-5 text-navy" />
+                  <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Pratiquants</CardTitle>
+                  <div className="p-2 bg-navy/10 rounded-lg"><Users className="h-5 w-5 text-navy" /></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display">{reportData.totalMembers}</div>
-                  <p className="text-xs text-muted-foreground mt-1">{reportData.activeMembers} actifs</p>
+                  <div className="text-3xl font-bold font-display text-navy">{reportData.totalMembers}</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">{reportData.activeMembers} membres actifs</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-none shadow-md rounded-xl overflow-hidden hover:scale-[1.02] transition-transform">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Encaissé</CardTitle>
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Encaissé</CardTitle>
+                  <div className="p-2 bg-green-50 rounded-lg"><TrendingUp className="h-5 w-5 text-green-600" /></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display">{reportData.totalPayments.toLocaleString()} FCFA</div>
+                  <div className="text-3xl font-bold font-display text-green-600 truncate">{reportData.totalPayments.toLocaleString()} FCFA</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Recettes validées</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-none shadow-md rounded-xl overflow-hidden hover:scale-[1.02] transition-transform">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Dépenses</CardTitle>
-                  <Wallet className="h-5 w-5 text-red-500" />
+                  <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Dépenses</CardTitle>
+                  <div className="p-2 bg-red-50 rounded-lg"><Wallet className="h-5 w-5 text-red-500" /></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display text-red-600">{reportData.totalExpenses.toLocaleString()} FCFA</div>
+                  <div className="text-3xl font-bold font-display text-red-600 truncate">{reportData.totalExpenses.toLocaleString()} FCFA</div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Sorties de caisse</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-none shadow-md rounded-xl overflow-hidden hover:scale-[1.02] transition-transform">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Inscriptions</CardTitle>
-                  <CreditCard className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Inscriptions</CardTitle>
+                  <div className="p-2 bg-blue-50 rounded-lg"><CreditCard className="h-5 w-5 text-blue-600" /></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display">{reportData.registrationPayments.toLocaleString()} FCFA</div>
+                  <div className="text-3xl font-bold font-display text-blue-800 truncate">{reportData.registrationPayments.toLocaleString()} FCFA</div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-none shadow-md rounded-xl overflow-hidden hover:scale-[1.02] transition-transform">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Mensualités</CardTitle>
-                  <BarChart3 className="h-5 w-5 text-red-martial" />
+                  <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mensualités</CardTitle>
+                  <div className="p-2 bg-red-martial/10 rounded-lg"><BarChart3 className="h-5 w-5 text-red-martial" /></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display">{reportData.monthlyPayments.toLocaleString()} FCFA</div>
+                  <div className="text-3xl font-bold font-display text-red-martial truncate">{reportData.monthlyPayments.toLocaleString()} FCFA</div>
                 </CardContent>
               </Card>
-              <Card className="bg-navy text-white">
+              <Card className="bg-navy text-white border-none shadow-xl rounded-xl overflow-hidden hover:scale-[1.02] transition-transform">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-white/70">Solde Net</CardTitle>
-                  <TrendingUp className="h-5 w-5 text-white" />
+                  <CardTitle className="text-xs font-bold text-white/70 uppercase tracking-widest">Solde Net</CardTitle>
+                  <div className="p-2 bg-white/10 rounded-lg"><TrendingUp className="h-5 w-5 text-white" /></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display">{reportData.netBalance.toLocaleString()} FCFA</div>
-                  <p className="text-xs text-white/60 mt-1">Recettes - Dépenses</p>
+                  <div className="text-3xl font-bold font-display text-white truncate">{reportData.netBalance.toLocaleString()} FCFA</div>
+                  <p className="text-xs text-white/60 mt-1 font-medium tracking-wide">RECETTES - DÉPENSES</p>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader><CardTitle>Répartition par mode de paiement</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
+              <Card className="border-none shadow-md rounded-xl overflow-hidden">
+                <CardHeader className="bg-muted/30 border-b pb-4">
+                  <CardTitle className="text-lg font-display font-semibold text-navy flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Répartition par mode
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
                     {Object.entries(reportData.paymentsByMethod).length > 0 ? (
                       Object.entries(reportData.paymentsByMethod).map(([method, amount]) => (
-                        <div key={method} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${method === 'wave' ? 'bg-orange-500' : method === 'cash' ? 'bg-gray-500' : 'bg-slate-500'}`}></div>
-                            <span>{methodLabels[method] || method}</span>
+                        <div key={method} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm font-semibold text-navy">
+                            <span className="capitalize">{methodLabels[method] || method}</span>
+                            <span className="font-mono">{amount.toLocaleString()} F</span>
                           </div>
-                          <span className="font-mono font-medium">{amount.toLocaleString()} FCFA</span>
+                          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-1000 ${method === 'wave' ? 'bg-orange-500' :
+                                  method === 'cash' ? 'bg-emerald-500' :
+                                    method === 'transfer' ? 'bg-blue-500' : 'bg-slate-400'
+                                }`}
+                              style={{ width: `${(amount / reportData.totalPayments) * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-right text-[10px] text-muted-foreground font-bold">
+                            {Math.round((amount / reportData.totalPayments) * 100)}% du total
+                          </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-muted-foreground py-4">Aucune donnée disponible</div>
+                      <div className="text-center text-muted-foreground py-12 flex flex-col items-center gap-3">
+                        <BarChart3 className="h-12 w-12 opacity-20" />
+                        <p>Aucune donnée disponible</p>
+                      </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader><CardTitle>Résumé financier</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+              <Card className="border-none shadow-md rounded-xl overflow-hidden">
+                <CardHeader className="bg-muted/30 border-b pb-4">
+                  <CardTitle className="text-lg font-display font-semibold text-navy flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Résumé financier
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 sm:p-6">
+                  <div className="space-y-1 p-4 sm:p-0">
                     {[
-                      { label: "Frais d'inscription", value: reportData.registrationPayments },
-                      { label: 'Mensualités', value: reportData.monthlyPayments },
-                      { label: 'Autres paiements', value: reportData.otherPayments },
+                      { label: "Frais d'inscription", value: reportData.registrationPayments, color: 'text-blue-700' },
+                      { label: 'Mensualités', value: reportData.monthlyPayments, color: 'text-red-martial' },
+                      { label: 'Autres paiements', value: reportData.otherPayments, color: 'text-slate-700' },
                     ].map(item => (
-                      <div key={item.label} className="flex justify-between items-center py-2 border-b">
-                        <span className="text-muted-foreground">{item.label}</span>
-                        <span className="font-mono font-medium">{item.value.toLocaleString()} FCFA</span>
+                      <div key={item.label} className="flex justify-between items-center py-3 border-b border-dashed">
+                        <span className="text-sm font-medium text-muted-foreground">{item.label}</span>
+                        <span className={`font-mono font-bold ${item.color}`}>{item.value.toLocaleString()} F</span>
                       </div>
                     ))}
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-muted-foreground">Total Dépenses</span>
-                      <span className="font-mono font-medium text-red-600">-{reportData.totalExpenses.toLocaleString()} FCFA</span>
+                    <div className="flex justify-between items-center py-3 border-b border-dashed bg-red-50/30 px-2 -mx-2 rounded-lg my-1">
+                      <span className="text-sm font-bold text-red-600">Total Dépenses</span>
+                      <span className="font-mono font-black text-red-600">-{reportData.totalExpenses.toLocaleString()} F</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 text-lg font-bold">
-                      <span>Solde Net</span>
-                      <span className={`font-mono ${reportData.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {reportData.netBalance.toLocaleString()} FCFA
-                      </span>
+                    <div className="flex justify-between items-center py-6 px-3 bg-navy text-white rounded-xl mt-6 shadow-lg shadow-navy/20 transition-transform hover:scale-[1.01]">
+                      <span className="text-lg font-display font-bold">Solde Final</span>
+                      <div className="text-right">
+                        <span className="text-2xl font-mono font-black">
+                          {reportData.netBalance.toLocaleString()}
+                        </span>
+                        <span className="text-xs ml-1 font-bold">FCFA</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

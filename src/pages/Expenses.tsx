@@ -146,140 +146,158 @@ export default function Expenses() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-display font-bold text-navy">Gestion des Dépenses</h1>
                         <p className="text-muted-foreground">Suivez toutes les sorties d'argent du club</p>
                     </div>
-                    <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="bg-navy hover:bg-navy-light">
-                        <Plus className="h-4 w-4 mr-2" />Nouvelle dépense
+                    <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="w-full sm:w-auto bg-navy hover:bg-navy-light h-12 rounded-xl">
+                        <Plus className="h-5 w-5 mr-2" />Nouvelle dépense
                     </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-white border-red-100">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <Label className="text-sm font-medium">Total Dépenses</Label>
-                            <Wallet className="h-4 w-4 text-red-500" />
-                        </CardHeader>
-                        <div className="px-6 pb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="bg-white border-red-100 shadow-sm overflow-hidden">
+                        <div className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <Label className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Dépenses</Label>
+                                <Wallet className="h-5 w-5 text-red-500" />
+                            </div>
                             {loading ? (
                                 <div className="h-8 w-24 bg-muted animate-pulse rounded" />
                             ) : (
-                                <>
-                                    <div className="text-2xl font-bold text-red-600">
+                                <div className="flex flex-col">
+                                    <div className="text-2xl sm:text-3xl font-bold text-red-600 truncate">
                                         {totalAmount.toLocaleString('fr-FR')} FCFA
                                     </div>
-                                    <p className="text-xs text-muted-foreground">Sur la base des filtres actuels</p>
-                                </>
+                                    <p className="text-xs text-muted-foreground mt-1">Sur la base des filtres actuels</p>
+                                </div>
                             )}
                         </div>
                     </Card>
                 </div>
 
-                <Card>
-                    <CardHeader>
+                <Card className="overflow-hidden border-none shadow-md">
+                    <CardHeader className="pb-4">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Rechercher une dépense..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                            <Input placeholder="Rechercher une dépense..." className="pl-10 rounded-lg h-11" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0 sm:p-6">
                         {loading ? (
-                            <div className="text-center py-8">Chargement...</div>
+                            <div className="text-center py-12">
+                                <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
+                                <p className="text-muted-foreground">Chargement des dépenses...</p>
+                            </div>
                         ) : filteredExpenses.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">Aucune dépense trouvée</div>
+                            <div className="text-center py-12 text-muted-foreground">
+                                <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p>Aucune dépense trouvée</p>
+                            </div>
                         ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Catégorie</TableHead>
-                                        <TableHead>Saison</TableHead>
-                                        <TableHead className="text-right">Montant</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredExpenses.map((expense) => (
-                                        <TableRow key={expense.id}>
-                                            <TableCell>{new Date(expense.expense_date).toLocaleDateString('fr-FR')}</TableCell>
-                                            <TableCell className="font-medium">{expense.description}</TableCell>
-                                            <TableCell>{expense.category}</TableCell>
-                                            <TableCell>{expense.seasons?.name || '-'}</TableCell>
-                                            <TableCell className="text-right font-bold text-red-600">-{expense.amount.toLocaleString()} F</TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(expense)}><Pencil className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => { setSelectedExpense(expense); setIsDeleteDialogOpen(true); }} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                                                </div>
-                                            </TableCell>
+                            <div className="overflow-x-auto w-full">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/50">
+                                            <TableHead className="whitespace-nowrap font-bold">Date</TableHead>
+                                            <TableHead className="whitespace-nowrap font-bold">Description</TableHead>
+                                            <TableHead className="whitespace-nowrap font-bold">Catégorie</TableHead>
+                                            <TableHead className="whitespace-nowrap font-bold">Saison</TableHead>
+                                            <TableHead className="text-right whitespace-nowrap font-bold">Montant</TableHead>
+                                            <TableHead className="text-right whitespace-nowrap font-bold">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredExpenses.map((expense) => (
+                                            <TableRow key={expense.id} className="hover:bg-muted/30 transition-colors">
+                                                <TableCell className="whitespace-nowrap text-muted-foreground font-mono text-xs">{new Date(expense.expense_date).toLocaleDateString('fr-FR')}</TableCell>
+                                                <TableCell className="font-medium min-w-[200px]">{expense.description}</TableCell>
+                                                <TableCell className="whitespace-nowrap">
+                                                    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+                                                        {expense.category}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap">{expense.seasons?.name || '-'}</TableCell>
+                                                <TableCell className="text-right font-bold text-red-600 whitespace-nowrap">-{expense.amount.toLocaleString()} F</TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-1 md:gap-2">
+                                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(expense)} className="h-8 w-8 hover:bg-navy/10 hover:text-navy transition-colors">
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => { setSelectedExpense(expense); setIsDeleteDialogOpen(true); }} className="text-destructive h-8 w-8 hover:bg-destructive/10 transition-colors">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
 
                 <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{selectedExpense ? 'Modifier la dépense' : 'Ajouter une dépense'}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="season_id">Saison</Label>
-                                <Select value={formData.season_id} onValueChange={(v) => setFormData({ ...formData, season_id: v })}>
-                                    <SelectTrigger><SelectValue placeholder="Choisir une saison" /></SelectTrigger>
-                                    <SelectContent>{seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Description</Label>
-                                <Input id="description" required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Ex: Achat de matériel, Loyer salle..." />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                    <DialogContent className="max-w-md w-[95vw] rounded-xl overflow-hidden p-0">
+                        <div className="p-6">
+                            <DialogHeader className="mb-4">
+                                <DialogTitle>{selectedExpense ? 'Modifier la dépense' : 'Ajouter une dépense'}</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
                                 <div className="space-y-2">
-                                    <Label htmlFor="amount">Montant (FCFA)</Label>
-                                    <Input id="amount" type="number" required value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} />
+                                    <Label htmlFor="season_id">Saison</Label>
+                                    <Select value={formData.season_id} onValueChange={(v) => setFormData({ ...formData, season_id: v })}>
+                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Choisir une saison" /></SelectTrigger>
+                                        <SelectContent>{seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="expense_date">Date</Label>
-                                    <Input id="expense_date" type="date" required value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} />
+                                    <Label htmlFor="description">Description</Label>
+                                    <Input id="description" required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Ex: Achat de matériel, Loyer salle..." className="rounded-lg" />
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="category">Catégorie</Label>
-                                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Matériel">Matériel</SelectItem>
-                                        <SelectItem value="Loyer">Loyer / Salle</SelectItem>
-                                        <SelectItem value="Événement">Événement</SelectItem>
-                                        <SelectItem value="Transport">Transport</SelectItem>
-                                        <SelectItem value="Communication">Communication</SelectItem>
-                                        <SelectItem value="Divers">Divers</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button type="submit" className="w-full bg-navy hover:bg-navy-light text-white">
-                                {selectedExpense ? 'Modifier' : 'Ajouter'}
-                            </Button>
-                        </form>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="amount">Montant (FCFA)</Label>
+                                        <Input id="amount" type="number" required value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="rounded-lg" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="expense_date">Date</Label>
+                                        <Input id="expense_date" type="date" required value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} className="rounded-lg" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Catégorie</Label>
+                                    <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                                        <SelectTrigger className="rounded-lg"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Matériel">Matériel</SelectItem>
+                                            <SelectItem value="Loyer">Loyer / Salle</SelectItem>
+                                            <SelectItem value="Événement">Événement</SelectItem>
+                                            <SelectItem value="Transport">Transport</SelectItem>
+                                            <SelectItem value="Communication">Communication</SelectItem>
+                                            <SelectItem value="Divers">Divers</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button type="submit" className="w-full bg-navy hover:bg-navy-light text-white py-6 text-lg rounded-xl mt-2">
+                                    {selectedExpense ? 'Modifier' : 'Ajouter'}
+                                </Button>
+                            </form>
+                        </div>
                     </DialogContent>
                 </Dialog>
 
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="rounded-xl">
                         <AlertDialogHeader>
                             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                             <AlertDialogDescription>Êtes-vous sûr de vouloir supprimer cette dépense ? Cette action est irréversible.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 text-white">Supprimer</AlertDialogAction>
+                            <AlertDialogCancel className="rounded-lg">Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 text-white rounded-lg">Supprimer</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>

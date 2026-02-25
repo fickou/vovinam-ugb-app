@@ -254,69 +254,76 @@ export default function Members() {
           <p className="text-sm font-semibold mt-1">Liste des Pratiquants - {new Date().toLocaleDateString('fr-FR')}</p>
         </div>
 
-        <Card className="print:shadow-none print:border-none">
-          <CardHeader className="no-print">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="relative w-full max-w-sm">
+        <Card className="print:shadow-none print:border-none overflow-hidden">
+          <CardHeader className="no-print pb-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Rechercher un pratiquant..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+                <Input placeholder="Rechercher un pratiquant..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 w-full" />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="new">Nouveaux</SelectItem>
-                  <SelectItem value="active">Actifs uniquement</SelectItem>
-                  <SelectItem value="suspended">Suspendus</SelectItem>
-                  <SelectItem value="former">Anciens</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    <SelectItem value="new">Nouveaux</SelectItem>
+                    <SelectItem value="active">Actifs uniquement</SelectItem>
+                    <SelectItem value="suspended">Suspendus</SelectItem>
+                    <SelectItem value="former">Anciens</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
             {loading ? (
-              <div className="text-center py-8">Chargement...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Chargement des pratiquants...</p>
+              </div>
             ) : filteredMembers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground">
                 <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucun pratiquant trouvé</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>N° Adhérent</TableHead>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Téléphone</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Statut</TableHead>
-                    {isAdmin && <TableHead className="text-right no-print">Actions</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMembers.map((member) => (
-                    <TableRow key={member.id} className={member.status !== 'active' ? 'no-print' : ''}>
-                      <TableCell className="font-mono">{member.member_number}</TableCell>
-                      <TableCell className="font-medium">{member.first_name} {member.last_name}</TableCell>
-                      <TableCell>{member.phone || '-'}</TableCell>
-                      <TableCell>{member.email || '-'}</TableCell>
-                      <TableCell>{getStatusBadge(member.status)}</TableCell>
-                      {isAdmin && (
-                        <TableCell className="text-right no-print">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(member)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+              <div className="overflow-x-auto w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="whitespace-nowrap">N° Adhérent</TableHead>
+                      <TableHead className="whitespace-nowrap">Nom</TableHead>
+                      <TableHead className="whitespace-nowrap">Téléphone</TableHead>
+                      <TableHead className="whitespace-nowrap">Email</TableHead>
+                      <TableHead className="whitespace-nowrap">Statut</TableHead>
+                      {isAdmin && <TableHead className="text-right no-print whitespace-nowrap">Actions</TableHead>}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredMembers.map((member) => (
+                      <TableRow key={member.id} className={member.status !== 'active' ? 'no-print' : ''}>
+                        <TableCell className="font-mono whitespace-nowrap">{member.member_number}</TableCell>
+                        <TableCell className="font-medium whitespace-nowrap">{member.first_name} {member.last_name}</TableCell>
+                        <TableCell className="whitespace-nowrap">{member.phone || '-'}</TableCell>
+                        <TableCell className="whitespace-nowrap max-w-[200px] truncate">{member.email || '-'}</TableCell>
+                        <TableCell className="whitespace-nowrap">{getStatusBadge(member.status)}</TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-right no-print">
+                            <div className="flex justify-end gap-1 md:gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => openEditDialog(member)} className="h-8 w-8">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { setSelectedMember(member); setIsDeleteDialogOpen(true); }} className="text-destructive hover:text-destructive h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

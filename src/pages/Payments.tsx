@@ -237,225 +237,235 @@ export default function Payments() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold text-navy">Paiements</h1>
             <p className="text-muted-foreground">Historique des transactions</p>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="bg-white border-green-100 shadow-sm transition-all hover:shadow-md">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Encaissé (Validé)</Label>
-                  <CreditCard className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="text-3xl font-bold text-green-600">
-                  {payments
-                    .filter(p => p.status === 'VALIDATED')
-                    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
-                    .toLocaleString('fr-FR')} FCFA
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="bg-navy hover:bg-navy-light">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau paiement
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{selectedPayment ? 'Modifier le paiement' : showWavePayment ? 'Paiement Wave' : 'Nouveau paiement'}</DialogTitle>
-              </DialogHeader>
-              {showWavePayment ? (
-                <WavePayment
-                  amount={parseInt(formData.amount) || 0}
-                  memberId={formData.member_id}
-                  seasonId={formData.season_id}
-                  paymentType={formData.payment_type}
-                  monthNumber={formData.month_number}
-                  onSuccess={() => { setIsDialogOpen(false); resetForm(); fetchAll(); toast({ title: 'Succès', description: 'Paiement Wave enregistré' }); }}
-                  onCancel={() => setShowWavePayment(false)}
-                />
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {!isMemberOnly && (
-                    <div className="space-y-2">
-                      <Label>Pratiquant</Label>
-                      <Select value={formData.member_id} onValueChange={(v) => setFormData({ ...formData, member_id: v })}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner un pratiquant" /></SelectTrigger>
-                        <SelectContent>
-                          {members.map(m => <SelectItem key={m.id} value={m.id}>{m.last_name} {m.first_name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label>Saison</Label>
-                    <Select value={formData.season_id} onValueChange={(v) => setFormData({ ...formData, season_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner une saison" /></SelectTrigger>
-                      <SelectContent>
-                        {seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Type</Label>
-                      <Select value={formData.payment_type} onValueChange={(v) => {
-                        const amount = getAmountForType(v);
-                        setFormData({ ...formData, payment_type: v, amount });
-                      }}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="monthly">Mensualité</SelectItem>
-                          <SelectItem value="registration">Inscription</SelectItem>
-                          <SelectItem value="annual">Annuel</SelectItem>
-                          <SelectItem value="other">Autre</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Méthode</Label>
-                      <Select value={formData.payment_method} onValueChange={(v) => setFormData({ ...formData, payment_method: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cash">Espèces</SelectItem>
-                          <SelectItem value="wave">Wave</SelectItem>
-                          <SelectItem value="transfer">Virement</SelectItem>
-                          <SelectItem value="other">Autre</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  {formData.payment_type === 'monthly' && (
-                    <div className="space-y-2">
-                      <Label>Mois</Label>
-                      <Select value={formData.month_number} onValueChange={(v) => setFormData({ ...formData, month_number: v })}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner le mois" /></SelectTrigger>
-                        <SelectContent>
-                          {monthNames.map((name, i) => <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Montant (FCFA)</Label>
-                      <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Date</Label>
-                      <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required />
-                    </div>
-                  </div>
-                  {canManage && (
-                    <div className="space-y-2">
-                      <Label>Statut</Label>
-                      <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="VALIDATED">Validé</SelectItem>
-                          <SelectItem value="PENDING">En attente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label>Notes</Label>
-                    <Input value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Optionnel" />
-                  </div>
-                  <Button type="submit" className="w-full bg-navy hover:bg-navy-light">
-                    {selectedPayment ? 'Modifier' : 'Enregistrer'}
-                  </Button>
-                </form>
-              )}
-            </DialogContent>
-          </Dialog>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="lg:col-span-2 bg-white border-green-100 shadow-sm transition-all hover:shadow-md overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Encaissé (Validé)</Label>
+                <CreditCard className="h-5 w-5 text-green-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold text-green-600 truncate">
+                {payments
+                  .filter(p => p.status === 'VALIDATED')
+                  .reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                  .toLocaleString('fr-FR')} FCFA
+              </div>
+            </div>
+          </Card>
+
+          <div className="flex items-stretch no-print">
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+              <DialogTrigger asChild>
+                <Button className="w-full h-full min-h-[50px] bg-navy hover:bg-navy-light text-base rounded-xl">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Nouveau paiement
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md w-[95vw] rounded-xl overflow-hidden p-0">
+                <div className="p-6">
+                  <DialogHeader className="mb-4">
+                    <DialogTitle>{selectedPayment ? 'Modifier le paiement' : showWavePayment ? 'Paiement Wave' : 'Nouveau paiement'}</DialogTitle>
+                  </DialogHeader>
+                  {showWavePayment ? (
+                    <WavePayment
+                      amount={parseInt(formData.amount) || 0}
+                      memberId={formData.member_id}
+                      seasonId={formData.season_id}
+                      paymentType={formData.payment_type}
+                      monthNumber={formData.month_number}
+                      onSuccess={() => { setIsDialogOpen(false); resetForm(); fetchAll(); toast({ title: 'Succès', description: 'Paiement Wave enregistré' }); }}
+                      onCancel={() => setShowWavePayment(false)}
+                    />
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                      {!isMemberOnly && (
+                        <div className="space-y-2">
+                          <Label>Pratiquant</Label>
+                          <Select value={formData.member_id} onValueChange={(v) => setFormData({ ...formData, member_id: v })}>
+                            <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner un pratiquant" /></SelectTrigger>
+                            <SelectContent>
+                              {members.map(m => <SelectItem key={m.id} value={m.id}>{m.last_name} {m.first_name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <Label>Saison</Label>
+                        <Select value={formData.season_id} onValueChange={(v) => setFormData({ ...formData, season_id: v })}>
+                          <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner une saison" /></SelectTrigger>
+                          <SelectContent>
+                            {seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Type</Label>
+                          <Select value={formData.payment_type} onValueChange={(v) => {
+                            const amount = getAmountForType(v);
+                            setFormData({ ...formData, payment_type: v, amount });
+                          }}>
+                            <SelectTrigger className="rounded-lg"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="monthly">Mensualité</SelectItem>
+                              <SelectItem value="registration">Inscription</SelectItem>
+                              <SelectItem value="annual">Annuel</SelectItem>
+                              <SelectItem value="other">Autre</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Méthode</Label>
+                          <Select value={formData.payment_method} onValueChange={(v) => setFormData({ ...formData, payment_method: v })}>
+                            <SelectTrigger className="rounded-lg"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cash">Espèces</SelectItem>
+                              <SelectItem value="wave">Wave</SelectItem>
+                              <SelectItem value="transfer">Virement</SelectItem>
+                              <SelectItem value="other">Autre</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {formData.payment_type === 'monthly' && (
+                        <div className="space-y-2">
+                          <Label>Mois</Label>
+                          <Select value={formData.month_number} onValueChange={(v) => setFormData({ ...formData, month_number: v })}>
+                            <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner le mois" /></SelectTrigger>
+                            <SelectContent>
+                              {monthNames.map((name, i) => <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Montant (FCFA)</Label>
+                          <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Date</Label>
+                          <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                        </div>
+                      </div>
+                      {canManage && (
+                        <div className="space-y-2">
+                          <Label>Statut</Label>
+                          <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                            <SelectTrigger className="rounded-lg"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="VALIDATED">Validé</SelectItem>
+                              <SelectItem value="PENDING">En attente</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <Label>Notes</Label>
+                        <Input value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Optionnel" className="rounded-lg" />
+                      </div>
+                      <Button type="submit" className="w-full bg-navy hover:bg-navy-light py-6 text-lg rounded-xl mt-2">
+                        {selectedPayment ? 'Modifier' : 'Enregistrer'}
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        <Card className="overflow-hidden border-none shadow-md">
+          <CardContent className="p-0 sm:p-6">
             {loading ? (
-              <div className="text-center py-8">Chargement...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Chargement des paiements...</p>
+              </div>
             ) : payments.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground">
                 <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucun paiement enregistré</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Pratiquant</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Mois</TableHead>
-                    <TableHead>Méthode</TableHead>
-                    <TableHead>Montant</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="font-medium">
-                        {payment.members ? `${payment.members.last_name} ${payment.members.first_name}` : '-'}
-                      </TableCell>
-                      <TableCell>{getPaymentTypeLabel(payment.payment_type)}</TableCell>
-                      <TableCell>{payment.month_number ? monthNames[payment.month_number - 1] : '-'}</TableCell>
-                      <TableCell>{getMethodLabel(payment.payment_method)}</TableCell>
-                      <TableCell className="font-bold">{payment.amount.toLocaleString()} F</TableCell>
-                      <TableCell>{new Date(payment.payment_date).toLocaleDateString('fr-FR')}</TableCell>
-                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {payment.proof_url && (
-                            <Button variant="ghost" size="icon" onClick={() => window.open(payment.proof_url!, '_blank')}>
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canManage && (
-                            <>
-                              <Button
-                                variant="ghost" size="icon"
-                                onClick={() => handleValidate(payment)}
-                                title={payment.status === 'VALIDATED' ? 'Mettre en attente' : 'Valider'}
-                              >
-                                <Check className={`h-4 w-4 ${payment.status === 'VALIDATED' ? 'text-green-600' : 'text-muted-foreground'}`} />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => openEditDialog(payment)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => { setSelectedPayment(payment); setIsDeleteDialogOpen(true); }} className="text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="whitespace-nowrap font-bold">Pratiquant</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Type</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Mois</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Méthode</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Montant</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Date</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Statut</TableHead>
+                      <TableHead className="text-right whitespace-nowrap font-bold">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {payments.map((payment) => (
+                      <TableRow key={payment.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium whitespace-nowrap">
+                          {payment.members ? `${payment.members.last_name} ${payment.members.first_name}` : '-'}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{getPaymentTypeLabel(payment.payment_type)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{payment.month_number ? monthNames[payment.month_number - 1] : '-'}</TableCell>
+                        <TableCell className="whitespace-nowrap">{getMethodLabel(payment.payment_method)}</TableCell>
+                        <TableCell className="font-bold whitespace-nowrap text-navy">{payment.amount.toLocaleString()} F</TableCell>
+                        <TableCell className="whitespace-nowrap text-muted-foreground font-mono text-xs">{new Date(payment.payment_date).toLocaleDateString('fr-FR')}</TableCell>
+                        <TableCell className="whitespace-nowrap">{getStatusBadge(payment.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1 md:gap-2">
+                            {payment.proof_url && (
+                              <Button variant="ghost" size="icon" onClick={() => window.open(payment.proof_url!, '_blank')} className="h-8 w-8 hover:bg-navy/10 hover:text-navy transition-colors" title="Voir la preuve">
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canManage && (
+                              <>
+                                <Button
+                                  variant="ghost" size="icon"
+                                  onClick={() => handleValidate(payment)}
+                                  title={payment.status === 'VALIDATED' ? 'Mettre en attente' : 'Valider'}
+                                  className="h-8 w-8 hover:bg-green-50 hover:text-green-600 transition-colors"
+                                >
+                                  <Check className={`h-4 w-4 ${payment.status === 'VALIDATED' ? 'text-green-600' : 'text-muted-foreground'}`} />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => openEditDialog(payment)} className="h-8 w-8 hover:bg-navy/10 hover:text-navy transition-colors">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => { setSelectedPayment(payment); setIsDeleteDialogOpen(true); }} className="text-destructive h-8 w-8 hover:bg-destructive/10 transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="rounded-xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer ce paiement ?</AlertDialogTitle>
               <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+              <AlertDialogCancel className="rounded-lg">Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 rounded-lg">Supprimer</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

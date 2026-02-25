@@ -165,142 +165,195 @@ export default function Users() {
             <h1 className="text-3xl font-display font-bold text-navy">Gestion des utilisateurs</h1>
             <p className="text-muted-foreground">Gérez les rôles et permissions</p>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="bg-navy hover:bg-navy-light text-white gap-2">
-            <UserPlus className="h-4 w-4" />Ajouter un utilisateur
+          <Button onClick={() => setIsAddDialogOpen(true)} className="w-full sm:w-auto bg-navy hover:bg-navy-light text-white h-12 rounded-xl gap-2 shadow-lg shadow-navy/20">
+            <UserPlus className="h-5 w-5" />
+            <span className="font-semibold">Ajouter un compte</span>
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCog className="h-5 w-5" />Utilisateurs et rôles
+        <Card className="border-none shadow-md overflow-hidden rounded-xl">
+          <CardHeader className="bg-muted/30 border-b">
+            <CardTitle className="flex items-center gap-2 text-navy">
+              <UserCog className="h-5 w-5" />
+              <span>Comptes et privilèges</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
             {loading ? (
-              <div className="text-center py-8">Chargement...</div>
+              <div className="text-center py-12">
+                <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Chargement des utilisateurs...</p>
+              </div>
             ) : users.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground italic">
                 <UserCog className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucun utilisateur trouvé</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Utilisateur</TableHead>
-                    <TableHead>Rôle actuel</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((userRole) => (
-                    <TableRow key={userRole.id}>
-                      <TableCell className="font-medium">
-                        {userRole.first_name || userRole.last_name
-                          ? `${userRole.first_name} ${userRole.last_name}`
-                          : <span className="text-muted-foreground italic">Sans profil</span>}
-                      </TableCell>
-                      <TableCell>{getRoleBadge(userRole.role)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="text-navy hover:text-navy hover:bg-navy/10"
-                            onClick={() => { setSelectedUser(userRole); setEditFormData({ role: userRole.role }); setIsEditDialogOpen(true); }}>
-                            <Pencil className="h-4 w-4 mr-2" />Modifier
-                          </Button>
-                          {isSuperAdmin && userRole.user_id !== currentUser?.id && (
-                            <Button variant="ghost" size="sm" className="text-red-martial hover:bg-red-martial/10"
-                              onClick={() => handleDeleteUser(userRole)}>
-                              <Trash2 className="h-4 w-4 mr-2" />Révoquer
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="whitespace-nowrap font-bold">Utilisateur</TableHead>
+                      <TableHead className="whitespace-nowrap font-bold">Rôle actuel</TableHead>
+                      <TableHead className="text-right whitespace-nowrap font-bold">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((userRole) => (
+                      <TableRow key={userRole.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-semibold text-navy">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-navy/10 flex items-center justify-center text-navy font-bold text-xs">
+                              {userRole.first_name?.[0] || userRole.last_name?.[0] || '?'}
+                            </div>
+                            <div className="flex flex-col leading-tight">
+                              <span>
+                                {userRole.first_name || userRole.last_name
+                                  ? `${userRole.first_name} ${userRole.last_name}`
+                                  : <span className="text-muted-foreground italic">Sans profil</span>}
+                              </span>
+                              {userRole.user_id === currentUser?.id && (
+                                <span className="text-[10px] text-navy-light font-bold flex items-center gap-1">
+                                  <Shield className="h-2 w-2" /> (C'est vous)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getRoleBadge(userRole.role)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1 sm:gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 rounded-lg text-navy hover:text-navy hover:bg-navy/10 font-bold"
+                              onClick={() => { setSelectedUser(userRole); setEditFormData({ role: userRole.role }); setIsEditDialogOpen(true); }}
+                            >
+                              <Pencil className="h-4 w-4 mr-1 sm:mr-2" />
+                              <span className="hidden sm:inline">Modifier</span>
+                            </Button>
+                            {isSuperAdmin && userRole.user_id !== currentUser?.id && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 rounded-lg text-red-martial hover:bg-red-martial/10 font-bold"
+                                onClick={() => handleDeleteUser(userRole)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Révoquer</span>
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Modifier le rôle</DialogTitle></DialogHeader>
-            <form onSubmit={handleUpdateRole} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Utilisateur</Label>
-                <div className="p-2 bg-muted rounded text-sm font-medium">
-                  {selectedUser?.first_name} {selectedUser?.last_name}
+          <DialogContent className="max-w-md w-[95vw] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
+            <div className="p-6">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-2xl font-display font-bold text-navy flex items-center gap-2">
+                  <UserCog className="h-6 w-6" />
+                  Modifier les accès
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateRole} className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Utilisateur</Label>
+                  <div className="p-4 bg-navy/5 border border-navy/10 rounded-xl text-lg font-display font-bold text-navy flex items-center gap-3">
+                    <User className="h-5 w-5 text-navy-light" />
+                    {selectedUser?.first_name} {selectedUser?.last_name}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Rôle</Label>
-                <Select value={editFormData.role} onValueChange={(v) => setEditFormData({ role: v as AppRole })}
-                  disabled={selectedUser?.user_id === currentUser?.id}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Membre</SelectItem>
-                    <SelectItem value="coach">Entraîneur</SelectItem>
-                    <SelectItem value="treasurer">Trésorier</SelectItem>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                    {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
-                  </SelectContent>
-                </Select>
-                {selectedUser?.user_id === currentUser?.id && (
-                  <p className="text-xs text-amber-600 italic">Pour votre sécurité, vous ne pouvez pas modifier votre propre rôle.</p>
-                )}
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Annuler</Button>
-                <Button type="submit" className="bg-red-martial hover:bg-red-martial-light text-white">Enregistrer</Button>
-              </DialogFooter>
-            </form>
+                <div className="space-y-3">
+                  <Label htmlFor="role" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sélectionner un rôle</Label>
+                  <Select value={editFormData.role} onValueChange={(v) => setEditFormData({ role: v as AppRole })}
+                    disabled={selectedUser?.user_id === currentUser?.id}>
+                    <SelectTrigger className="h-12 rounded-xl focus:ring-navy border-navy/20"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-xl font-medium">
+                      <SelectItem value="member">Membre (Accès limité)</SelectItem>
+                      <SelectItem value="coach">Entraîneur (Suivi cours)</SelectItem>
+                      <SelectItem value="treasurer">Trésorier (Paiements)</SelectItem>
+                      <SelectItem value="admin">Administrateur (Gestion totale)</SelectItem>
+                      {isSuperAdmin && <SelectItem value="super_admin">Super Admin (Système)</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                  {selectedUser?.user_id === currentUser?.id && (
+                    <p className="text-[11px] text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 italic flex gap-2 items-start mt-2">
+                      <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <span>Par mesure de sécurité, vous ne pouvez pas modifier votre propre rôle pour éviter de perdre vos accès administrateur.</span>
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button type="button" variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold">Annuler</Button>
+                  <Button type="submit" className="flex-1 bg-red-martial hover:bg-black text-white h-12 rounded-xl font-bold transition-all shadow-lg shadow-red-martial/20">
+                    Mettre à jour
+                  </Button>
+                </div>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
 
         {/* Add Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Ajouter un utilisateur</DialogTitle></DialogHeader>
-            <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add_first_name">Prénom</Label>
-                  <Input id="add_first_name" value={addFormData.first_name} onChange={(e) => setAddFormData({ ...addFormData, first_name: e.target.value })} required />
+          <DialogContent className="max-w-md w-[95vw] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
+            <div className="p-6">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-2xl font-display font-bold text-navy flex items-center gap-2">
+                  <UserPlus className="h-6 w-6" />
+                  Nouveau compte
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="add_first_name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Prénom</Label>
+                    <Input id="add_first_name" value={addFormData.first_name} onChange={(e) => setAddFormData({ ...addFormData, first_name: e.target.value })} required className="h-11 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add_last_name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nom</Label>
+                    <Input id="add_last_name" value={addFormData.last_name} onChange={(e) => setAddFormData({ ...addFormData, last_name: e.target.value })} required className="h-11 rounded-xl" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="add_last_name">Nom</Label>
-                  <Input id="add_last_name" value={addFormData.last_name} onChange={(e) => setAddFormData({ ...addFormData, last_name: e.target.value })} required />
+                  <Label htmlFor="add_email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email de connexion</Label>
+                  <Input id="add_email" type="email" value={addFormData.email} onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })} required className="h-11 rounded-xl" />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="add_email">Email</Label>
-                <Input id="add_email" type="email" value={addFormData.email} onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="add_password">Mot de passe provisoire</Label>
-                <Input id="add_password" type="password" value={addFormData.password} onChange={(e) => setAddFormData({ ...addFormData, password: e.target.value })} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="add_role">Rôle initial</Label>
-                <Select value={addFormData.role} onValueChange={(v) => setAddFormData({ ...addFormData, role: v as AppRole })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Membre</SelectItem>
-                    <SelectItem value="coach">Entraîneur</SelectItem>
-                    <SelectItem value="treasurer">Trésorier</SelectItem>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                    {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
-                  </SelectContent>
-                </Select>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-                <Button type="submit" className="bg-navy hover:bg-navy-light text-white">Créer le compte</Button>
-              </DialogFooter>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="add_password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mot de passe provisoire</Label>
+                  <Input id="add_password" type="password" value={addFormData.password} onChange={(e) => setAddFormData({ ...addFormData, password: e.target.value })} required className="h-11 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="add_role" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rôle initial</Label>
+                  <Select value={addFormData.role} onValueChange={(v) => setAddFormData({ ...addFormData, role: v as AppRole })}>
+                    <SelectTrigger className="h-11 rounded-xl focus:ring-navy border-navy/20"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-xl font-medium">
+                      <SelectItem value="member">Membre</SelectItem>
+                      <SelectItem value="coach">Entraîneur</SelectItem>
+                      <SelectItem value="treasurer">Trésorier</SelectItem>
+                      <SelectItem value="admin">Administrateur</SelectItem>
+                      {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-6">
+                  <Button type="button" variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold">Annuler</Button>
+                  <Button type="submit" className="flex-1 bg-navy hover:bg-navy-light text-white h-12 rounded-xl font-bold transition-all shadow-lg shadow-navy/20">
+                    Créer le compte
+                  </Button>
+                </div>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

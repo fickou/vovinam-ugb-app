@@ -197,22 +197,24 @@ export default function Reminders() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-display font-bold text-navy">Rappels de Paiement</h1>
                         <p className="text-muted-foreground">Suivi des retards et notifications</p>
                     </div>
-                    <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-                        <Bell className="h-4 w-4 flex-shrink-0" />
-                        <span>L'envoi SMS n'est pas disponible dans cette version. Utilisez Wave ou appelez directement.</span>
+                    <div className="flex items-center gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 shadow-sm max-w-xl">
+                        <Bell className="h-5 w-5 flex-shrink-0 text-amber-600" />
+                        <p className="leading-tight">
+                            <span className="font-bold">Note :</span> L'envoi SMS n'est pas disponible. Utilisez Wave ou appelez directement les pratiquants.
+                        </p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="bg-blue-50 border-blue-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Card className="bg-blue-50 border-blue-100 shadow-sm transition-all hover:shadow-md">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-semibold text-blue-800 uppercase tracking-wider flex items-center gap-2">
-                                <Clock className="h-3 w-3" />Planning
+                            <CardTitle className="text-xs font-bold text-blue-800 uppercase tracking-widest flex items-center gap-2">
+                                <Clock className="h-4 w-4" />Planning
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -221,163 +223,179 @@ export default function Reminders() {
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="bg-red-50 border-red-100">
+                    <Card className="bg-red-50 border-red-100 shadow-sm transition-all hover:shadow-md">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-semibold text-red-800 uppercase tracking-wider flex items-center gap-2">
-                                <UserX className="h-3 w-3" />État Actuel
+                            <CardTitle className="text-xs font-bold text-red-800 uppercase tracking-widest flex items-center gap-2">
+                                <UserX className="h-4 w-4" />État Actuel
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm font-medium text-red-900">{delinquents.length} membre(s) en retard</p>
+                            <p className="text-lg font-bold text-red-900">{delinquents.length} membre(s) en retard</p>
                         </CardContent>
                     </Card>
-                    <Card className="bg-green-50 border-green-100">
+                    <Card className="bg-green-50 border-green-100 shadow-sm transition-all hover:shadow-md sm:col-span-2 lg:col-span-1">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-semibold text-green-800 uppercase tracking-wider flex items-center gap-2">
-                                <UserCheck className="h-3 w-3" />Traitement
+                            <CardTitle className="text-xs font-bold text-green-800 uppercase tracking-widest flex items-center gap-2">
+                                <UserCheck className="h-4 w-4" />Historique
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm font-medium text-green-900 leading-snug">Enregistrez les rappels pour garder un historique.</p>
+                            <p className="text-sm font-medium text-green-900 leading-snug">
+                                Les rappels enregistrés sont archivés pour votre suivi.
+                            </p>
                         </CardContent>
                     </Card>
                 </div>
 
                 <Tabs defaultValue="delinquents" className="w-full">
-                    <TabsList className="grid w-full max-w-[400px] grid-cols-2">
-                        <TabsTrigger value="delinquents" className="flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4" />En retard
+                    <TabsList className="bg-muted p-1 rounded-xl w-full sm:w-auto grid grid-cols-2 sm:flex sm:inline-flex">
+                        <TabsTrigger value="delinquents" className="rounded-lg px-6 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <AlertCircle className="h-4 w-4 mr-2" />En retard
                         </TabsTrigger>
-                        <TabsTrigger value="history" className="flex items-center gap-2">
-                            <History className="h-4 w-4" />Historique
+                        <TabsTrigger value="history" className="rounded-lg px-6 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <History className="h-4 w-4 mr-2" />Historique
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="delinquents" className="mt-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Liste des personnes en retard</CardTitle>
+                        <Card className="overflow-hidden border-none shadow-md">
+                            <CardHeader className="bg-white pb-4 border-b">
+                                <CardTitle className="text-xl font-display font-semibold text-navy">Personnes en retard</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-0 sm:p-6">
                                 {loading ? (
                                     <div className="text-center py-12 text-muted-foreground animate-pulse">Calcul des retards...</div>
                                 ) : delinquents.length === 0 ? (
-                                    <div className="text-center py-12 text-muted-foreground italic flex flex-col items-center gap-2">
-                                        <CheckCircle2 className="h-8 w-8 text-green-500" />
-                                        Tout le monde est à jour !
+                                    <div className="text-center py-12 text-muted-foreground italic flex flex-col items-center gap-3">
+                                        <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center">
+                                            <CheckCircle2 className="h-8 w-8 text-green-500" />
+                                        </div>
+                                        <p className="text-lg font-medium text-green-700">Tout le monde est à jour !</p>
                                     </div>
                                 ) : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>N°</TableHead>
-                                                <TableHead>Pratiquant</TableHead>
-                                                <TableHead>Manquant</TableHead>
-                                                <TableHead>Action</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {delinquents.map((member) => (
-                                                <TableRow key={member.id}>
-                                                    <TableCell className="font-mono text-xs">{member.member_number}</TableCell>
-                                                    <TableCell className="font-semibold">
-                                                        {member.first_name} {member.last_name}
-                                                        <p className="text-xs text-muted-foreground font-normal">{member.phone}</p>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {member.owes_registration && (
-                                                                <Badge variant="destructive" className="text-[10px] font-bold">INSCRIPTION</Badge>
-                                                            )}
-                                                            {member.unpaid_months.map(m => (
-                                                                <Badge key={m} className="bg-orange-100 text-orange-800 border-orange-200 text-[10px] font-bold uppercase">
-                                                                    {getShortMonthName(m)}
-                                                                </Badge>
-                                                            ))}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => {
-                                                                if (member.owes_registration) recordReminder(member.id, 'registration');
-                                                                if (member.unpaid_months.length > 0) recordReminder(member.id, 'monthly', member.unpaid_months[0]);
-                                                            }}
-                                                        >
-                                                            Enregistrer rappel
-                                                        </Button>
-                                                    </TableCell>
+                                    <div className="overflow-x-auto w-full">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                    <TableHead className="whitespace-nowrap font-bold">N°</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Pratiquant</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Manquant</TableHead>
+                                                    <TableHead className="text-right whitespace-nowrap font-bold no-print">Action</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {delinquents.map((member) => (
+                                                    <TableRow key={member.id} className="hover:bg-muted/30 transition-colors">
+                                                        <TableCell className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{member.member_number}</TableCell>
+                                                        <TableCell className="min-w-[180px]">
+                                                            <div className="font-bold text-navy truncate">
+                                                                {member.first_name} {member.last_name}
+                                                            </div>
+                                                            <div className="text-[10px] text-muted-foreground font-mono mt-1 flex items-center gap-1">
+                                                                <div className="w-1 h-1 rounded-full bg-slate-300" />
+                                                                {member.phone || 'Pas de téléphone'}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {member.owes_registration && (
+                                                                    <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase tracking-tighter">
+                                                                        INSCRIPTION
+                                                                    </span>
+                                                                )}
+                                                                {member.unpaid_months.map(m => (
+                                                                    <span key={m} className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-black uppercase tracking-tighter">
+                                                                        {getShortMonthName(m)}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right no-print">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-9 px-4 rounded-xl border-navy/20 hover:border-navy hover:bg-navy/5 text-navy text-xs font-semibold overflow-hidden transition-all whitespace-nowrap"
+                                                                onClick={() => {
+                                                                    if (member.owes_registration) recordReminder(member.id, 'registration');
+                                                                    if (member.unpaid_months.length > 0) recordReminder(member.id, 'monthly', member.unpaid_months[0]);
+                                                                }}
+                                                            >
+                                                                Notifier
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
                     </TabsContent>
 
                     <TabsContent value="history" className="mt-6">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-lg">Historique des communications</CardTitle>
+                        <Card className="overflow-hidden border-none shadow-md">
+                            <CardHeader className="bg-white pb-4 border-b flex flex-row items-center justify-between">
+                                <CardTitle className="text-xl font-display font-semibold text-navy">Historique des communications</CardTitle>
                                 {history.length > 0 && (
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="sm" className="gap-2">
+                                            <Button variant="ghost" size="sm" className="h-9 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors gap-2">
                                                 <Trash2 className="h-4 w-4" />
-                                                Effacer l'historique
+                                                <span className="hidden sm:inline">Effacer</span>
                                             </Button>
                                         </AlertDialogTrigger>
-                                        <AlertDialogContent>
+                                        <AlertDialogContent className="rounded-xl">
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                                                <AlertDialogDescription>Cette action supprimera tout l'historique des rappels envoyés.</AlertDialogDescription>
+                                                <AlertDialogTitle>Effacer l'historique ?</AlertDialogTitle>
+                                                <AlertDialogDescription>Cette action supprimera tout l'historique des rappels. C'est irréversible.</AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                                <AlertDialogAction onClick={clearHistory} className="bg-red-600 hover:bg-red-700">Confirmer</AlertDialogAction>
+                                                <AlertDialogCancel className="rounded-lg">Annuler</AlertDialogCancel>
+                                                <AlertDialogAction onClick={clearHistory} className="bg-red-600 hover:bg-red-700 rounded-lg">Confirmer</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 )}
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-0 sm:p-6">
                                 {loading ? (
                                     <div className="text-center py-12 text-muted-foreground">Chargement...</div>
                                 ) : history.length === 0 ? (
                                     <div className="text-center py-12 text-muted-foreground italic">Aucun rappel enregistré pour le moment.</div>
                                 ) : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Date</TableHead>
-                                                <TableHead>Pratiquant</TableHead>
-                                                <TableHead>Type</TableHead>
-                                                <TableHead>Mois</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {history.map((item) => (
-                                                <TableRow key={item.id}>
-                                                    <TableCell className="text-sm">
-                                                        {format(new Date(item.sent_at || item.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                                                    </TableCell>
-                                                    <TableCell className="font-medium">
-                                                        {item.members ? `${item.members.first_name} ${item.members.last_name}` : '-'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="secondary">
-                                                            {item.type === 'registration' ? 'Inscription' : 'Mensualité'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>{getMonthName(item.month_number)}</TableCell>
-                                                    <TableCell>{getStatusBadge(item.status)}</TableCell>
+                                    <div className="overflow-x-auto w-full">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                    <TableHead className="whitespace-nowrap font-bold">Date</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Pratiquant</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Type</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Mois</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Status</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {history.map((item) => (
+                                                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
+                                                        <TableCell className="whitespace-nowrap text-muted-foreground font-mono text-[10px]">
+                                                            {format(new Date(item.sent_at || item.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                                                        </TableCell>
+                                                        <TableCell className="font-bold text-navy whitespace-nowrap">
+                                                            {item.members ? `${item.members.first_name} ${item.members.last_name}` : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-nowrap">
+                                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.type === 'registration' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'}`}>
+                                                                {item.type === 'registration' ? 'Inscription' : 'Mensualité'}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="whitespace-nowrap font-medium">{getMonthName(item.month_number)}</TableCell>
+                                                        <TableCell className="whitespace-nowrap">{getStatusBadge(item.status)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>

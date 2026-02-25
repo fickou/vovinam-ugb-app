@@ -116,7 +116,7 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {[1, 2, 3, 4].map((i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader className="pb-2">
@@ -129,34 +129,34 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {statCards.filter(s => s.show).map((stat, index) => (
-              <Card key={index} className="relative overflow-hidden">
-                <div className={`absolute top-0 right-0 w-24 h-24 ${stat.color} opacity-10 rounded-bl-full`}></div>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+              <Card key={index} className="relative overflow-hidden group hover:shadow-md transition-shadow">
+                <div className={`absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 ${stat.color} opacity-10 rounded-bl-full transition-transform group-hover:scale-110`}></div>
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     {stat.title}
                   </CardTitle>
-                  <stat.icon className={`h-5 w-5 ${stat.color.replace('bg-', 'text-')}`} />
+                  <stat.icon className={`h-4 w-4 md:h-5 md:w-5 ${stat.color.replace('bg-', 'text-')}`} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold font-display">{stat.value}</div>
+                  <div className="text-xl md:text-2xl font-bold font-display truncate">{stat.value}</div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                 Alertes
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg border-2 border-dashed">
                 Aucune alerte pour le moment
               </div>
             </CardContent>
@@ -166,49 +166,60 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle>Actions rapides</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-4">
               {isMember && (
                 <a
                   href="/dashboard/payments"
-                  className="block p-3 rounded-lg bg-red-martial/10 hover:bg-red-martial/20 transition-colors border border-red-martial/20"
+                  className="group block p-4 rounded-xl bg-red-martial/5 hover:bg-red-martial/10 transition-all border border-red-martial/20 hover:border-red-martial/40"
                 >
-                  <div className="font-bold text-red-martial flex items-center gap-2">
-                    <Wallet className="h-4 w-4" />
+                  <div className="font-bold text-red-martial flex items-center gap-2 mb-1">
+                    <Wallet className="h-5 w-5" />
                     Payer ma cotisation
                   </div>
-                  <div className="text-sm text-red-martial/80">Effectuer un paiement via Wave</div>
+                  <div className="text-sm text-red-martial/80">Effectuer un paiement sécurisé via Wave</div>
                 </a>
               )}
 
-              {isStaff && (
-                <>
-                  {isAdmin && (
+              <div className="grid grid-cols-1 gap-2">
+                {isStaff && (
+                  <>
+                    {isAdmin && (
+                      <a
+                        href="/dashboard/members"
+                        className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border hover:bg-accent hover:text-accent-foreground transition-all sm:p-4"
+                      >
+                        <Users className="h-5 w-5 text-navy shrink-0" />
+                        <div>
+                          <div className="font-semibold text-sm md:text-base">Ajouter un pratiquant</div>
+                          <div className="text-xs text-muted-foreground hidden sm:block">Inscrire un nouveau membre</div>
+                        </div>
+                      </a>
+                    )}
+                    {canManagePayments && (
+                      <a
+                        href="/dashboard/payments"
+                        className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border hover:bg-accent hover:text-accent-foreground transition-all sm:p-4"
+                      >
+                        <CreditCard className="h-5 w-5 text-navy shrink-0" />
+                        <div>
+                          <div className="font-semibold text-sm md:text-base">Enregistrer un paiement</div>
+                          <div className="text-xs text-muted-foreground hidden sm:block">Ajouter une nouvelle transaction</div>
+                        </div>
+                      </a>
+                    )}
                     <a
-                      href="/dashboard/members"
-                      className="block p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                      href="/dashboard/seasons"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border hover:bg-accent hover:text-accent-foreground transition-all sm:p-4"
                     >
-                      <div className="font-medium">Ajouter un pratiquant</div>
-                      <div className="text-sm text-muted-foreground">Inscrire un nouveau membre</div>
+                      <Calendar className="h-5 w-5 text-navy shrink-0" />
+                      <div>
+                        <div className="font-semibold text-sm md:text-base">Gérer les saisons</div>
+                        <div className="text-xs text-muted-foreground hidden sm:block">Configurer les tarifs et périodes</div>
+                      </div>
                     </a>
-                  )}
-                  {canManagePayments && (
-                    <a
-                      href="/dashboard/payments"
-                      className="block p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <div className="font-medium">Enregistrer un paiement</div>
-                      <div className="text-sm text-muted-foreground">Ajouter une nouvelle transaction</div>
-                    </a>
-                  )}
-                  <a
-                    href="/dashboard/seasons"
-                    className="block p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                  >
-                    <div className="font-medium">Gérer les saisons</div>
-                    <div className="text-sm text-muted-foreground">Configurer les tarifs</div>
-                  </a>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
