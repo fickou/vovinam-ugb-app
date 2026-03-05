@@ -88,14 +88,16 @@ export default function Seasons() {
     if (selectedSeason) {
       const { error } = await supabase.from('seasons').update(formData).eq('id', selectedSeason.id);
       if (error) {
-        toast({ title: 'Erreur', description: 'Impossible de modifier la saison', variant: 'destructive' });
+        console.error('Erreur update season:', error);
+        toast({ title: 'Erreur', description: `Impossible de modifier la saison: ${error.message}`, variant: 'destructive' });
         return;
       }
       toast({ title: 'Succès', description: 'Saison modifiée avec succès' });
     } else {
       const { error } = await supabase.from('seasons').insert(formData);
       if (error) {
-        toast({ title: 'Erreur', description: 'Impossible d\'ajouter la saison', variant: 'destructive' });
+        console.error('Erreur insert season:', error);
+        toast({ title: 'Erreur', description: `Impossible d'ajouter la saison: ${error.message}`, variant: 'destructive' });
         return;
       }
       toast({ title: 'Succès', description: 'Saison ajoutée avec succès' });

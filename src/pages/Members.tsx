@@ -126,14 +126,16 @@ export default function Members() {
     if (selectedMember) {
       const { error } = await supabase.from('members').update(payload).eq('id', selectedMember.id);
       if (error) {
-        toast({ title: 'Erreur', description: 'Impossible de modifier le pratiquant', variant: 'destructive' });
+        console.error('Erreur update member:', error);
+        toast({ title: 'Erreur', description: `Impossible de modifier le pratiquant: ${error.message}`, variant: 'destructive' });
         return;
       }
       toast({ title: 'Succès', description: 'Pratiquant modifié avec succès' });
     } else {
       const { error } = await supabase.from('members').insert(payload);
       if (error) {
-        toast({ title: 'Erreur', description: 'Impossible d\'ajouter le pratiquant', variant: 'destructive' });
+        console.error('Erreur insert member:', error);
+        toast({ title: 'Erreur', description: `Impossible d'ajouter le pratiquant: ${error.message}`, variant: 'destructive' });
         return;
       }
       toast({ title: 'Succès', description: 'Pratiquant ajouté avec succès' });
@@ -148,7 +150,8 @@ export default function Members() {
     if (!selectedMember) return;
     const { error } = await supabase.from('members').delete().eq('id', selectedMember.id);
     if (error) {
-      toast({ title: 'Erreur', description: 'Impossible de supprimer le pratiquant. Il a peut-être des paiements associés.', variant: 'destructive' });
+      console.error('Erreur delete member:', error);
+      toast({ title: 'Erreur', description: `Impossible de supprimer le pratiquant: ${error.message}`, variant: 'destructive' });
     } else {
       toast({ title: 'Succès', description: 'Pratiquant supprimé avec succès' });
       setIsDeleteDialogOpen(false);

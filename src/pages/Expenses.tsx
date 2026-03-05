@@ -112,11 +112,11 @@ export default function Expenses() {
 
         if (selectedExpense) {
             const { error } = await supabase.from('expenses').update(payload).eq('id', selectedExpense.id);
-            if (error) { toast({ title: 'Erreur', description: 'Impossible de modifier la dépense', variant: 'destructive' }); return; }
+            if (error) { console.error('Erreur update expense:', error); toast({ title: 'Erreur', description: `Impossible de modifier la dépense: ${error.message}`, variant: 'destructive' }); return; }
             toast({ title: 'Succès', description: 'Dépense modifiée avec succès' });
         } else {
             const { error } = await supabase.from('expenses').insert(payload);
-            if (error) { toast({ title: 'Erreur', description: 'Impossible d\'ajouter la dépense', variant: 'destructive' }); return; }
+            if (error) { console.error('Erreur insert expense:', error); toast({ title: 'Erreur', description: `Impossible d'ajouter la dépense: ${error.message}`, variant: 'destructive' }); return; }
             toast({ title: 'Succès', description: 'Dépense ajoutée avec succès' });
         }
         setIsDialogOpen(false);
@@ -128,7 +128,8 @@ export default function Expenses() {
         if (!selectedExpense) return;
         const { error } = await supabase.from('expenses').delete().eq('id', selectedExpense.id);
         if (error) {
-            toast({ title: 'Erreur', description: 'Impossible de supprimer la dépense', variant: 'destructive' });
+            console.error('Erreur delete expense:', error);
+            toast({ title: 'Erreur', description: `Impossible de supprimer la dépense: ${error.message}`, variant: 'destructive' });
         } else {
             toast({ title: 'Succès', description: 'Dépense supprimée' });
             setIsDeleteDialogOpen(false);

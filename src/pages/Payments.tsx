@@ -169,14 +169,16 @@ export default function Payments() {
     if (selectedPayment) {
       const { error } = await supabase.from('payments').update(payload).eq('id', selectedPayment.id);
       if (error) {
-        toast({ title: 'Erreur', description: 'Impossible de modifier le paiement', variant: 'destructive' });
+        console.error('Erreur update payment:', error);
+        toast({ title: 'Erreur', description: `Impossible de modifier le paiement: ${error.message}`, variant: 'destructive' });
         return;
       }
       toast({ title: 'Succès', description: 'Paiement modifié' });
     } else {
       const { error } = await supabase.from('payments').insert({ ...payload, recorded_by: user?.id });
       if (error) {
-        toast({ title: 'Erreur', description: 'Impossible d\'ajouter le paiement', variant: 'destructive' });
+        console.error('Erreur insert payment:', error);
+        toast({ title: 'Erreur', description: `Impossible d'ajouter le paiement: ${error.message}`, variant: 'destructive' });
         return;
       }
       toast({ title: 'Succès', description: 'Paiement enregistré' });
@@ -191,7 +193,8 @@ export default function Payments() {
     const newStatus = payment.status === 'VALIDATED' ? 'PENDING' : 'VALIDATED';
     const { error } = await supabase.from('payments').update({ status: newStatus }).eq('id', payment.id);
     if (error) {
-      toast({ title: 'Erreur', description: 'Impossible de modifier le statut', variant: 'destructive' });
+      console.error('Erreur update status:', error);
+      toast({ title: 'Erreur', description: `Impossible de modifier le statut: ${error.message}`, variant: 'destructive' });
     } else {
       fetchAll();
     }
@@ -201,7 +204,8 @@ export default function Payments() {
     if (!selectedPayment) return;
     const { error } = await supabase.from('payments').delete().eq('id', selectedPayment.id);
     if (error) {
-      toast({ title: 'Erreur', description: 'Impossible de supprimer', variant: 'destructive' });
+      console.error('Erreur delete payment:', error);
+      toast({ title: 'Erreur', description: `Impossible de supprimer: ${error.message}`, variant: 'destructive' });
     } else {
       toast({ title: 'Succès', description: 'Paiement supprimé' });
       setIsDeleteDialogOpen(false);
