@@ -161,6 +161,7 @@ export default function Reminders() {
         if (!activeSeason) return;
 
         const { error } = await supabase.from('reminders').insert({
+            id: crypto.randomUUID(),
             member_id: memberId,
             season_id: activeSeason.id,
             type,
@@ -170,7 +171,8 @@ export default function Reminders() {
         });
 
         if (error) {
-            toast({ title: 'Erreur', description: 'Impossible d\'enregistrer le rappel.', variant: 'destructive' });
+            console.error('Erreur insert reminder:', error);
+            toast({ title: 'Erreur', description: `Impossible d'enregistrer le rappel: ${error.message}`, variant: 'destructive' });
         } else {
             toast({
                 title: 'Rappel enregistré',

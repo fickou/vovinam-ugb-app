@@ -91,13 +91,15 @@ export default function BoardMembers() {
     const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const { error } = await supabase.from('board_members').insert({
+            id: crypto.randomUUID(),
             member_id: addFormData.member_id,
             position: addFormData.position,
             season_id: selectedSeasonId,
         });
 
         if (error) {
-            toast({ title: 'Erreur', description: 'Impossible d\'ajouter ce membre', variant: 'destructive' });
+            console.error('Erreur insert board_member:', error);
+            toast({ title: 'Erreur', description: `Impossible d'ajouter ce membre: ${error.message}`, variant: 'destructive' });
         } else {
             toast({ title: 'Succès', description: 'Membre ajouté au bureau' });
             setIsAddDialogOpen(false);

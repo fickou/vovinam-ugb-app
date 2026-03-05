@@ -132,7 +132,7 @@ export default function Members() {
       }
       toast({ title: 'Succès', description: 'Pratiquant modifié avec succès' });
     } else {
-      const { error } = await supabase.from('members').insert(payload);
+      const { error } = await supabase.from('members').insert({ ...payload, id: crypto.randomUUID() });
       if (error) {
         console.error('Erreur insert member:', error);
         toast({ title: 'Erreur', description: `Impossible d'ajouter le pratiquant: ${error.message}`, variant: 'destructive' });

@@ -175,7 +175,7 @@ export default function Payments() {
       }
       toast({ title: 'Succès', description: 'Paiement modifié' });
     } else {
-      const { error } = await supabase.from('payments').insert({ ...payload, recorded_by: user?.id });
+      const { error } = await supabase.from('payments').insert({ ...payload, id: crypto.randomUUID(), recorded_by: user?.id });
       if (error) {
         console.error('Erreur insert payment:', error);
         toast({ title: 'Erreur', description: `Impossible d'ajouter le paiement: ${error.message}`, variant: 'destructive' });

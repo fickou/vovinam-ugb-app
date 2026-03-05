@@ -90,6 +90,7 @@ export default function Users() {
 
     // Create profile
     await supabase.from('profiles').insert({
+      id: crypto.randomUUID(),
       user_id: data.user.id,
       first_name: addFormData.first_name,
       last_name: addFormData.last_name,
@@ -97,6 +98,7 @@ export default function Users() {
 
     // Set role
     await supabase.from('user_roles').upsert({
+      id: crypto.randomUUID(),
       user_id: data.user.id,
       role: addFormData.role,
     }, { onConflict: 'user_id' });

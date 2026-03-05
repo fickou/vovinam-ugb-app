@@ -94,7 +94,7 @@ export default function Seasons() {
       }
       toast({ title: 'Succès', description: 'Saison modifiée avec succès' });
     } else {
-      const { error } = await supabase.from('seasons').insert(formData);
+      const { error } = await supabase.from('seasons').insert({ ...formData, id: crypto.randomUUID() });
       if (error) {
         console.error('Erreur insert season:', error);
         toast({ title: 'Erreur', description: `Impossible d'ajouter la saison: ${error.message}`, variant: 'destructive' });

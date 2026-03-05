@@ -115,7 +115,7 @@ export default function Expenses() {
             if (error) { console.error('Erreur update expense:', error); toast({ title: 'Erreur', description: `Impossible de modifier la dépense: ${error.message}`, variant: 'destructive' }); return; }
             toast({ title: 'Succès', description: 'Dépense modifiée avec succès' });
         } else {
-            const { error } = await supabase.from('expenses').insert(payload);
+            const { error } = await supabase.from('expenses').insert({ ...payload, id: crypto.randomUUID() });
             if (error) { console.error('Erreur insert expense:', error); toast({ title: 'Erreur', description: `Impossible d'ajouter la dépense: ${error.message}`, variant: 'destructive' }); return; }
             toast({ title: 'Succès', description: 'Dépense ajoutée avec succès' });
         }
