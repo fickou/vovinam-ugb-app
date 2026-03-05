@@ -14,6 +14,7 @@ import {
   Shield,
   Bell,
   Wallet,
+  IdCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +44,7 @@ const mainMenuItems = [
   { title: 'Dépenses', url: '/dashboard/expenses', icon: Wallet },
   { title: 'Le Bureau', url: '/dashboard/board', icon: Shield },
   { title: 'Rappels', url: '/dashboard/reminders', icon: Bell },
+  { title: 'Carte', url: '/dashboard/card', icon: IdCard },
   { title: 'Rapports', url: '/dashboard/reports', icon: BarChart3 },
 ];
 
