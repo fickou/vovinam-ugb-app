@@ -16,7 +16,7 @@ export default function CardGenerator() {
 
     const [form, setForm] = useState({
         ligue: 'SAINT-LOUIS',
-        clubName: 'VOVINAM UGB SC',
+        clubName: 'VOVINAM UGB SPORTING CLUB',
         firstName: 'DAOUDA',
         lastName: 'FICKOU',
         phone: '+221 78 282 96 73',
