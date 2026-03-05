@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, FileImage, FileText, Upload, Loader2 } from 'lucide-react';
 import vovinamLogo from '@/assets/logo.png';
+import vovinam_Logo from '@/assets/logo-vovinam.png';
 
 export default function CardGenerator() {
     const cardRef = useRef<HTMLDivElement>(null);
@@ -24,7 +25,7 @@ export default function CardGenerator() {
     });
 
     const [clubLogo, setClubLogo] = useState<string>(vovinamLogo);
-    const [vovinamLogoImg, setVovinamLogoImg] = useState<string>('');
+    const [vovinamLogoImg, setVovinamLogoImg] = useState<string>(vovinam_Logo);
     const [memberPhoto, setMemberPhoto] = useState<string>('');
 
     const update = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
