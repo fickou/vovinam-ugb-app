@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, FileImage, FileText, Upload } from 'lucide-react';
+import { Download, FileImage, FileText, Upload, Loader2 } from 'lucide-react';
 import vovinamLogo from '@/assets/logo.png';
 
 export default function CardGenerator() {
     const cardRef = useRef<HTMLDivElement>(null);
+    const [exporting, setExporting] = useState(false);
 
     const [form, setForm] = useState({
         ligue: 'DAKAR',
@@ -39,32 +40,68 @@ export default function CardGenerator() {
         reader.readAsDataURL(file);
     };
 
-    const exportPNG = async () => {
-        if (!cardRef.current) return;
-        const canvas = await html2canvas(cardRef.current, {
-            scale: 3,
+    // Detect mobile for lower canvas scale (memory)
+    const isMobile = () => window.innerWidth < 768;
+
+    const captureCard = async () => {
+        if (!cardRef.current) return null;
+        return html2canvas(cardRef.current, {
+            scale: isMobile() ? 2 : 3,
             useCORS: true,
             backgroundColor: '#ffffff',
+            logging: false,
         });
+    };
+
+    const downloadBlob = (blob: Blob, filename: string) => {
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.download = `carte_${form.firstName}_${form.lastName}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
         link.click();
+        // Cleanup after a delay (iOS needs time)
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 1000);
+    };
+
+    const exportPNG = async () => {
+        if (exporting) return;
+        setExporting(true);
+        try {
+            const canvas = await captureCard();
+            if (!canvas) return;
+            const filename = `carte_${form.firstName}_${form.lastName}.png`;
+            // Convert to blob for better mobile compatibility
+            canvas.toBlob((blob) => {
+                if (blob) downloadBlob(blob, filename);
+            }, 'image/png');
+        } finally {
+            setExporting(false);
+        }
     };
 
     const exportPDF = async () => {
-        if (!cardRef.current) return;
-        const canvas = await html2canvas(cardRef.current, {
-            scale: 3,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-        });
-        const imgData = canvas.toDataURL('image/png');
-        const cardWidth = 86; // mm (credit card size)
-        const cardHeight = (canvas.height / canvas.width) * cardWidth;
-        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [cardWidth + 10, cardHeight + 10] });
-        pdf.addImage(imgData, 'PNG', 5, 5, cardWidth, cardHeight);
-        pdf.save(`carte_${form.firstName}_${form.lastName}.pdf`);
+        if (exporting) return;
+        setExporting(true);
+        try {
+            const canvas = await captureCard();
+            if (!canvas) return;
+            const imgData = canvas.toDataURL('image/png');
+            const cardWidth = 86; // mm (credit card size)
+            const cardHeight = (canvas.height / canvas.width) * cardWidth;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [cardWidth + 10, cardHeight + 10] });
+            pdf.addImage(imgData, 'PNG', 5, 5, cardWidth, cardHeight);
+            const filename = `carte_${form.firstName}_${form.lastName}.pdf`;
+            // Use blob output for better mobile compatibility
+            const pdfBlob = pdf.output('blob');
+            downloadBlob(pdfBlob, filename);
+        } finally {
+            setExporting(false);
+        }
     };
 
     return (
@@ -162,11 +199,11 @@ export default function CardGenerator() {
 
                             {/* Export Buttons */}
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                <Button onClick={exportPNG} className="flex-1 bg-navy hover:bg-navy-light h-12 rounded-xl text-base gap-2 shadow-lg shadow-navy/20">
-                                    <FileImage className="h-5 w-5" /> Télécharger PNG
+                                <Button onClick={exportPNG} disabled={exporting} className="flex-1 bg-navy hover:bg-navy-light h-12 rounded-xl text-base gap-2 shadow-lg shadow-navy/20">
+                                    {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileImage className="h-5 w-5" />} Télécharger PNG
                                 </Button>
-                                <Button onClick={exportPDF} variant="outline" className="flex-1 h-12 rounded-xl text-base gap-2 border-navy text-navy hover:bg-navy/5">
-                                    <FileText className="h-5 w-5" /> Télécharger PDF
+                                <Button onClick={exportPDF} disabled={exporting} variant="outline" className="flex-1 h-12 rounded-xl text-base gap-2 border-navy text-navy hover:bg-navy/5">
+                                    {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />} Télécharger PDF
                                 </Button>
                             </div>
                         </CardContent>
@@ -179,7 +216,7 @@ export default function CardGenerator() {
                             <h2 className="font-display font-bold text-navy text-lg">Aperçu en temps réel</h2>
                         </div>
 
-                        <div className="flex justify-center">
+                        <div className="overflow-x-auto -mx-4 px-4 pb-2">
                             <div
                                 ref={cardRef}
                                 style={{
@@ -369,11 +406,11 @@ export default function CardGenerator() {
 
                         {/* Mobile Export Buttons */}
                         <div className="flex gap-3 xl:hidden pt-2">
-                            <Button onClick={exportPNG} className="flex-1 bg-navy hover:bg-navy-light h-12 rounded-xl text-base gap-2">
-                                <FileImage className="h-5 w-5" /> PNG
+                            <Button onClick={exportPNG} disabled={exporting} className="flex-1 bg-navy hover:bg-navy-light h-12 rounded-xl text-base gap-2">
+                                {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileImage className="h-5 w-5" />} PNG
                             </Button>
-                            <Button onClick={exportPDF} variant="outline" className="flex-1 h-12 rounded-xl text-base gap-2 border-navy text-navy">
-                                <FileText className="h-5 w-5" /> PDF
+                            <Button onClick={exportPDF} disabled={exporting} variant="outline" className="flex-1 h-12 rounded-xl text-base gap-2 border-navy text-navy">
+                                {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />} PDF
                             </Button>
                         </div>
                     </div>
