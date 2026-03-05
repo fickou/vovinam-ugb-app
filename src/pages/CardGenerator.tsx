@@ -15,11 +15,11 @@ export default function CardGenerator() {
     const [form, setForm] = useState({
         ligue: 'DAKAR',
         clubName: 'VOVINAM UGB SC',
-        firstName: 'Salimata',
-        lastName: 'Laye Thiaw',
-        phone: '+221 77 466 09 48',
+        firstName: 'DAOUDA',
+        lastName: 'FICKOU',
+        phone: '+221 78 282 96 73',
         season: '2026',
-        website: 'www.vovinam-gendarmerie.com',
+        website: 'https://vovinam-ugb-sc.netlify.app/',
     });
 
     const [clubLogo, setClubLogo] = useState<string>(vovinamLogo);
@@ -300,13 +300,8 @@ export default function CardGenerator() {
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: '6px', paddingTop: '4px' }}>
                                         {/* "Vovinam Việt Võ Đạo" text */}
                                         <div style={{ marginBottom: '8px' }}>
-                                            <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 900, fontSize: '18px', color: '#1e3a5f', letterSpacing: '1px' }}>VOVINAM </span>
-                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#dc2626' }}>V</span>
-                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#eab308' }}>IỆT </span>
-                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#dc2626' }}>V</span>
-                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#eab308' }}>Õ </span>
-                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#dc2626' }}>Đ</span>
-                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#eab308' }}>ẠO</span>
+                                            <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 900, fontSize: '18px', color: '#dc2626', letterSpacing: '1px' }}>VOVINAM </span>
+                                            <span style={{ fontFamily: "serif", fontWeight: 700, fontSize: '18px', color: '#1e3a5f' }}>VIỆT VÕ ĐẠO</span>
                                         </div>
 
                                         {/* Member Info */}
