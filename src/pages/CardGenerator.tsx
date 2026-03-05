@@ -15,7 +15,7 @@ export default function CardGenerator() {
     const [exporting, setExporting] = useState(false);
 
     const [form, setForm] = useState({
-        ligue: 'DAKAR',
+        ligue: 'SAINT-LOUIS',
         clubName: 'VOVINAM UGB SC',
         firstName: 'DAOUDA',
         lastName: 'FICKOU',
