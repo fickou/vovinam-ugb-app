@@ -17,6 +17,7 @@ import BoardMembers from "./pages/BoardMembers";
 import Reminders from "./pages/Reminders";
 import Expenses from "./pages/Expenses";
 import CardGenerator from "./pages/CardGenerator";
+import Cotisations from "./pages/Cotisations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -56,6 +57,11 @@ const App = () => (
             <Route path="/dashboard/payments" element={
               <ProtectedRoute>
                 <Payments />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/cotisations" element={
+              <ProtectedRoute requireStaff>
+                <Cotisations />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/reports" element={

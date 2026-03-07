@@ -15,6 +15,7 @@ import {
   Bell,
   Wallet,
   IdCard,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +42,7 @@ const mainMenuItems = [
   { title: 'Pratiquants', url: '/dashboard/members', icon: Users },
   { title: 'Saisons', url: '/dashboard/seasons', icon: Calendar },
   { title: 'Paiements', url: '/dashboard/payments', icon: CreditCard },
+  { title: 'Cotisations', url: '/dashboard/cotisations', icon: FileText },
   { title: 'Dépenses', url: '/dashboard/expenses', icon: Wallet },
   { title: 'Le Bureau', url: '/dashboard/board', icon: Shield },
   { title: 'Rappels', url: '/dashboard/reminders', icon: Bell },

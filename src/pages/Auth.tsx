@@ -137,18 +137,12 @@ export default function Auth() {
         <Card className="border-none shadow-2xl shadow-navy/10 rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
           <CardContent className="p-0">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-16 bg-navy/5 p-2 rounded-none">
+              <TabsList className="grid w-full grid-cols-1 h-16 bg-navy/5 p-2 rounded-none">
                 <TabsTrigger
                   value="login"
-                  className="rounded-[1.75rem] font-bold text-sm tracking-wide data-[state=active]:bg-white data-[state=active]:text-navy data-[state=active]:shadow-lg transition-all duration-300"
+                  className="rounded-[1.75rem] font-bold text-sm tracking-wide data-[state=active]:text-navy data-[state=active]:shadow-lg transition-all duration-300"
                 >
                   CONNEXION
-                </TabsTrigger>
-                <TabsTrigger
-                  value="signup"
-                  className="rounded-[1.75rem] font-bold text-sm tracking-wide data-[state=active]:bg-white data-[state=active]:text-red-martial data-[state=active]:shadow-lg transition-all duration-300"
-                >
-                  INSCRIPTION
                 </TabsTrigger>
               </TabsList>
 
