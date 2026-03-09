@@ -156,16 +156,53 @@ export default function Reminders() {
         }
     };
 
-    const recordReminder = async (memberId: string, type: string, monthNumber?: number) => {
-        const { data: activeSeason } = await supabase.from('seasons').select('id').eq('is_active', true).maybeSingle();
-        if (!activeSeason) return;
+    const handleSendReminder = async (member: DelinquentMember) => {
+        if (!member.phone) {
+            toast({ title: 'Erreur', description: 'Ce pratiquant n\'a pas de numéro de téléphone enregistré.', variant: 'destructive' });
+            return;
+        }
+
+        let phoneStr = member.phone.replace(/\D/g, '');
+        if (phoneStr.length === 9 && phoneStr.startsWith('7')) {
+            phoneStr = '221' + phoneStr;
+        }
+
+        const { data: activeSeason } = await supabase.from('seasons').select('*').eq('is_active', true).maybeSingle();
+        if (!activeSeason) {
+            toast({ title: 'Erreur', description: 'Aucune saison active trouvée.', variant: 'destructive' });
+            return;
+        }
+
+        let totalAmount = 0;
+        let details = [];
+
+        if (member.owes_registration) {
+            details.push(`inscription (${activeSeason.registration_fee} FCFA)`);
+            totalAmount += activeSeason.registration_fee;
+        }
+
+        if (member.unpaid_months.length > 0) {
+            const monthsStr = member.unpaid_months.map(m => format(new Date(2024, m - 1), 'MMMM', { locale: fr })).join(', ');
+            details.push(`mensualités de ${monthsStr} (${member.unpaid_months.length * activeSeason.monthly_fee} FCFA)`);
+            totalAmount += member.unpaid_months.length * activeSeason.monthly_fee;
+        }
+
+        const detailsStr = details.join(' et ');
+        const message = `VOVINAM UGB SPORTING CLUB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non reglees. Wave au 75 557 55 51.`;
+
+        const whatsappUrl = `https://wa.me/${phoneStr}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+
+        // On enregistre dans l'historique le premier motif de retard pour le suivi
+        const type = member.owes_registration ? 'registration' : 'monthly';
+        const monthNumber = member.unpaid_months.length > 0 ? member.unpaid_months[0] : null;
 
         const { error } = await supabase.from('reminders').insert({
             id: crypto.randomUUID(),
-            member_id: memberId,
+            member_id: member.id,
             season_id: activeSeason.id,
             type,
-            month_number: monthNumber || null,
+            month_number: monthNumber,
             status: 'sent',
             sent_at: new Date().toISOString(),
         });
@@ -317,10 +354,7 @@ export default function Reminders() {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="h-9 px-4 rounded-xl border-navy/20 hover:border-navy hover:bg-navy/5 text-navy text-xs font-semibold overflow-hidden transition-all whitespace-nowrap"
-                                                                onClick={() => {
-                                                                    if (member.owes_registration) recordReminder(member.id, 'registration');
-                                                                    if (member.unpaid_months.length > 0) recordReminder(member.id, 'monthly', member.unpaid_months[0]);
-                                                                }}
+                                                                onClick={() => handleSendReminder(member)}
                                                             >
                                                                 Notifier
                                                             </Button>
