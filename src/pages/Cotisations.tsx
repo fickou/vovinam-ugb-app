@@ -211,7 +211,6 @@ export default function Cotisations() {
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
                                 <div>
                                     <h1 className="text-3xl font-display font-bold text-navy">Gestion des cotisations</h1>
-                                    
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
                                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -71,7 +71,7 @@ export default function Reminders() {
 
             const { data: members } = await supabase
                 .from('members')
-                .select('id, first_name, last_name, phone, member_number')
+                .select('id, first_name, last_name, phone, member_number, created_at')
                 .eq('status', 'active');
 
             const { data: payments } = await supabase
@@ -106,11 +106,18 @@ export default function Reminders() {
                 // Check registration
                 const owes_registration = !memberPayments.types.has('registration') && !memberPayments.types.has('annual');
 
-                // Check monthly payments (from season start to current month - 1)
+                // Check monthly payments (from individual start or season start to current month - 1)
                 const unpaid_months: number[] = [];
                 if (!memberPayments.types.has('annual')) {
-                    // Start from the season start date
-                    let checkDate = new Date(seasonStart.getFullYear(), seasonStart.getMonth(), 1);
+                    const memberCreated = new Date(member.created_at);
+                    // Start from the latest of: season start or member creation month
+                    let checkDate = new Date(
+                        Math.max(seasonStart.getTime(), memberCreated.getTime())
+                    );
+
+                    // Normaliser au 1er du mois pour la comparaison
+                    checkDate = new Date(checkDate.getFullYear(), checkDate.getMonth(), 1);
+
                     // End at the beginning of the current month
                     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
