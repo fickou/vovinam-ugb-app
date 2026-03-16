@@ -81,6 +81,7 @@ export default function Payments() {
     notes: '',
     status: 'VALIDATED',
   });
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
 
   useEffect(() => {
     fetchAll();
@@ -120,6 +121,7 @@ export default function Payments() {
       notes: '',
       status: 'VALIDATED',
     });
+    setSelectedMonths([]);
     setSelectedPayment(null);
     setShowWavePayment(false);
   };
@@ -151,6 +153,37 @@ export default function Payments() {
     // If Wave and new payment, show the Wave component
     if (!selectedPayment && formData.payment_method === 'wave') {
       setShowWavePayment(true);
+      return;
+    }
+
+    // Multi-month insert (only for new monthly payments)
+    if (!selectedPayment && formData.payment_type === 'monthly') {
+      if (selectedMonths.length === 0) {
+        toast({ title: 'Erreur', description: 'Veuillez sélectionner au moins un mois', variant: 'destructive' });
+        return;
+      }
+      const rows = selectedMonths.map(m => ({
+        id: crypto.randomUUID(),
+        member_id: formData.member_id,
+        season_id: formData.season_id,
+        amount: parseInt(formData.amount),
+        payment_type: 'monthly',
+        payment_method: formData.payment_method,
+        payment_date: formData.payment_date,
+        month_number: m,
+        notes: formData.notes || null,
+        status: formData.status,
+        recorded_by: user?.id,
+      }));
+      const { error } = await supabase.from('payments').insert(rows);
+      if (error) {
+        toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Succès', description: `${selectedMonths.length} paiement(s) enregistré(s)` });
+      setIsDialogOpen(false);
+      resetForm();
+      fetchAll();
       return;
     }
 
@@ -213,12 +246,22 @@ export default function Payments() {
     }
   };
 
-  const getAmountForType = (type: string) => {
+  const getAmountForType = (type: string, months = 1) => {
     if (!activeSeason) return '';
     if (type === 'registration') return String(activeSeason.registration_fee);
-    if (type === 'monthly') return String(activeSeason.monthly_fee);
+    if (type === 'monthly') return String(activeSeason.monthly_fee * months);
     if (type === 'annual') return String(activeSeason.annual_total);
     return '';
+  };
+
+  const toggleMonth = (m: number) => {
+    const next = selectedMonths.includes(m)
+      ? selectedMonths.filter(x => x !== m)
+      : [...selectedMonths, m];
+    setSelectedMonths(next);
+    if (formData.payment_type === 'monthly' && activeSeason) {
+      setFormData(f => ({ ...f, amount: String(activeSeason.monthly_fee * next.length) }));
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -338,27 +381,73 @@ export default function Payments() {
                           </Select>
                         </div>
                       </div>
-                      {formData.payment_type === 'monthly' && (
+                      {formData.payment_type === 'monthly' && !selectedPayment && (
                         <div className="space-y-2">
-                          <Label>Mois</Label>
-                          <Select value={formData.month_number} onValueChange={(v) => setFormData({ ...formData, month_number: v })}>
-                            <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner le mois" /></SelectTrigger>
-                            <SelectContent>
-                              {monthNames.map((name, i) => <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
+                          <Label>
+                            Mois
+                            {selectedMonths.length > 0 && (
+                              <span className="ml-2 text-xs font-normal text-navy bg-navy/10 px-2 py-0.5 rounded-full">
+                                {selectedMonths.length} sélectionné(s)
+                              </span>
+                            )}
+                          </Label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {monthNames.map((name, i) => {
+                              const m = i + 1;
+                              const active = selectedMonths.includes(m);
+                              return (
+                                <button
+                                  key={m}
+                                  type="button"
+                                  onClick={() => toggleMonth(m)}
+                                  className={`px-2 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
+                                    ? 'bg-navy text-white border-navy'
+                                    : 'bg-white text-navy border-navy/20 hover:border-navy hover:bg-navy/5'
+                                    }`}
+                                >
+                                  {name.slice(0, 3)}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Montant (FCFA)</Label>
-                          <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" />
+                      {formData.payment_type === 'monthly' && !selectedPayment && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Montant total (FCFA)</Label>
+                            <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" placeholder="Calculé automatiquement" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Date</Label>
+                            <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label>Date</Label>
-                          <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                      )}
+                      {formData.payment_type === 'monthly' && selectedPayment && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Montant (FCFA)</Label>
+                            <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Date</Label>
+                            <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                          </div>
                         </div>
-                      </div>
+                      )}
+                      {!selectedPayment && formData.payment_type !== 'monthly' && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Montant (FCFA)</Label>
+                            <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Date</Label>
+                            <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                          </div>
+                        </div>
+                      )}
                       {canManage && (
                         <div className="space-y-2">
                           <Label>Statut</Label>
