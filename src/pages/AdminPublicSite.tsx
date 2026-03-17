@@ -43,7 +43,7 @@ export default function AdminPublicSite() {
                                     <MessageCircle className="w-4 h-4" /> Philosophie
                                 </TabsTrigger>
                                 <TabsTrigger value="schedule" className="flex items-center gap-2 px-4">
-                                    <FileImage className="w-4 h-4" /> Déroulé Séances
+                                    <FileImage className="w-4 h-4" /> Déroulé des Séances
                                 </TabsTrigger>
                                 <TabsTrigger value="contact" className="flex items-center gap-2 px-4">
                                     <MessageCircle className="w-4 h-4" /> Contact & FAQ
