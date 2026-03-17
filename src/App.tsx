@@ -19,6 +19,8 @@ import Expenses from "./pages/Expenses";
 import CardGenerator from "./pages/CardGenerator";
 import Cotisations from "./pages/Cotisations";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
+import AdminPublicSite from "./pages/AdminPublicSite";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,7 +98,12 @@ const App = () => (
             } />
             <Route path="/dashboard/settings" element={
               <ProtectedRoute requireAdmin>
-                <Users />
+                <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/public-site" element={
+              <ProtectedRoute requireAdmin>
+                <AdminPublicSite />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

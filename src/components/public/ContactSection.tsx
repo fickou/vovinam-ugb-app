@@ -1,84 +1,93 @@
+import { useState, useEffect } from 'react';
 import { MapPin, Clock, ArrowUpRight } from 'lucide-react';
+import { cmsApi } from '@/lib/cms';
+import { ContactContent } from '@/types/cms';
 
-const CONTACT_ITEMS = [
-    {
-        icon: MapPin,
-        label: 'Adresse',
-        value: 'Université Gaston Berger',
-        sub: 'Route de Ngallèle, Saint-Louis, Sénégal',
-        color: '#c0392b',
-    },
-    {
-        icon: Clock,
-        label: 'Entraînements',
-        value: 'Lun · Mer · Ven',
-        sub: '18h00 – 20h00 · DOJO Universitaire',
-        color: '#e5a800',
-    },
-];
-
-const FAQS = [
-    {
-        q: 'Faut-il une expérience préalable ?',
-        a: 'Non. Le Vovinam accueille les débutants à n\'importe quel âge. La première séance est gratuite et sans obligation.',
-    },
-    {
-        q: 'Quel équipement faut-il apporter ?',
-        a: 'Pour commencer, une tenue de sport suffit. L\'uniforme Vovinam (Võ phục) peut être acquis après votre inscription.',
-    },
-    {
-        q: 'Y a-t-il des compétitions ?',
-        a: 'Oui. Des tournois inter-universitaires sont organisés régionalement. La participation est encouragée mais non obligatoire.',
-    },
-    {
-        q: 'Quelle est la cotisation ?',
-        a: 'La cotisation est adaptée au contexte universitaire. Renseignez-vous directement auprès de nos encadrants lors d\'une séance.',
-    },
-];
+const fallbackContact: ContactContent = {
+    label: 'Contact & Infos',
+    titleLine1: 'Venez nous',
+    titleLine2: 'Rejoindre',
+    description: 'La meilleure façon de découvrir le Vovinam est de venir essayer. Présentez-vous directement au DOJO lors d\'une séance ou contactez-nous via WhatsApp.',
+    infoCards: [
+        { iconName: 'MapPin', label: 'Adresse', value: 'Université Gaston Berger', sub: 'Route de Ngallèle, Saint-Louis, Sénégal', color: '#c0392b' },
+        { iconName: 'Clock', label: 'Entraînements', value: 'Lun · Mer · Ven', sub: '18h00 – 20h00 · DOJO Universitaire', color: '#e5a800' }
+    ],
+    whatsappNumber: '+221 78 282 96 73',
+    whatsappMessage: 'Bonjour, je souhaite rejoindre le club Vovinam UGB. Pouvez-vous me donner plus d\'informations ?',
+    faqLabel: 'Questions fréquentes',
+    faqs: [
+        { q: 'Faut-il une expérience préalable ?', a: 'Non. Le Vovinam accueille les débutants à n\'importe quel âge. La première séance est gratuite et sans obligation.' },
+        { q: 'Quel équipement faut-il apporter ?', a: 'Pour commencer, une tenue de sport suffit. L\'uniforme Vovinam (Võ phục) peut être acquis après votre inscription.' },
+        { q: 'Y a-t-il des compétitions ?', a: 'Oui. Des tournois inter-universitaires sont organisés régionalement. La participation est encouragée mais non obligatoire.' },
+        { q: 'Quelle est la cotisation ?', a: 'La cotisation est adaptée au contexte universitaire. Renseignez-vous directement auprès de nos encadrants lors d\'une séance.' },
+    ],
+    finalCtaLabel: 'Prêt à commencer ?',
+    finalCtaTitle: 'Première séance gratuite',
+    finalCtaDesc: 'Pas besoin d\'expérience préalable. Venez simplement en tenue de sport au DOJO lors d\'une de nos séances — Lundi, Mercredi ou Vendredi à 18h00.',
+    finalCtaButton: 'Nous écrire',
+};
 
 export default function ContactSection() {
-    const wa = `https://wa.me/221782829673?text=${encodeURIComponent('Bonjour, je souhaite rejoindre le club Vovinam UGB. Pouvez-vous me donner plus d\'informations ?')}`;
+    const [data, setData] = useState<ContactContent>(fallbackContact);
+
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const settings = await cmsApi.getSettings('contact');
+                if (settings) setData(settings);
+            } catch (err) {
+                console.error("Erreur chargement contenu contact", err);
+            }
+        };
+        fetchContent();
+    }, []);
+
+    const wa = `https://wa.me/${(data?.whatsappNumber || fallbackContact.whatsappNumber).replace(/\s+/g, '')}?text=${encodeURIComponent(data?.whatsappMessage || fallbackContact.whatsappMessage)}`;
 
     return (
-        <section id="contact" className="py-28 sm:py-36 bg-[#07101f] relative overflow-hidden">
+        <section id="contact" className="py-28 sm:py-36 bg-[#0B1120] relative overflow-hidden">
+            {/* Soft atmospheric glow */}
+            <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-red-900/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
+
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#c0392b]/40 to-transparent" />
 
-            <div className="max-w-7xl mx-auto px-5 sm:px-8">
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
 
                 {/* Label */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="h-px w-12 bg-[#c0392b]" />
-                    <span className="text-[#c0392b] font-display text-xs font-bold uppercase tracking-[0.3em]">Contact & Infos</span>
+                    <span className="text-[#c0392b] font-display text-xs font-bold uppercase tracking-[0.3em]">{data.label}</span>
                 </div>
 
                 {/* Heading */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-16 items-end">
                     <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black text-white uppercase leading-none">
-                        Venez nous<br />
-                        <span className="text-[#e5a800]">Rejoindre</span>
+                        {data?.titleLine1 || fallbackContact.titleLine1}<br />
+                        <span className="text-[#e5a800]">{data?.titleLine2 || fallbackContact.titleLine2}</span>
                     </h2>
-                    <p className="text-white/50 text-base leading-relaxed">
-                        La meilleure façon de découvrir le Vovinam est de venir essayer.
-                        Présentez-vous directement au DOJO lors d'une séance ou contactez-nous via WhatsApp.
+                    <p className="text-white/50 text-base leading-relaxed whitespace-pre-line">
+                        {data?.description || fallbackContact.description}
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-16">
-                    {/* Info cards */}
+                    {/* Info cards (dynamique via infoCards array) */}
                     <div className="lg:col-span-2 space-y-4">
-                        {CONTACT_ITEMS.map((c) => (
-                            <div key={c.label} className="flex gap-5 p-6 rounded-2xl border border-white/8 bg-white/2 hover:border-white/15 transition-all">
-                                <div className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                                    style={{ backgroundColor: c.color + '20', border: `1px solid ${c.color}30` }}>
-                                    <c.icon className="h-6 w-6" style={{ color: c.color }} />
+                        {(data?.infoCards || fallbackContact.infoCards).map((card, i) => {
+                            const Icon = card.iconName === 'MapPin' ? MapPin : Clock;
+                            return (
+                                <div key={i} className="flex gap-5 p-6 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-md shadow-xl hover:border-white/15 hover:bg-white/10 transition-all duration-300">
+                                    <div className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner" style={{ backgroundColor: `${card.color}15`, border: `1px solid ${card.color}25` }}>
+                                        <Icon className="h-6 w-6" style={{ color: card.color }} />
+                                    </div>
+                                    <div>
+                                        <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold mb-1">{card.label}</p>
+                                        <p className="text-white font-display font-medium text-lg">{card.value}</p>
+                                        <p className="text-white/50 text-sm mt-0.5">{card.sub}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-white/40 text-xs uppercase tracking-widest font-bold mb-1">{c.label}</p>
-                                    <p className="text-white font-display font-bold text-base">{c.value}</p>
-                                    <p className="text-white/50 text-sm mt-0.5">{c.sub}</p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
 
                         {/* WhatsApp CTA */}
                         <a href={wa} target="_blank" rel="noopener noreferrer"
@@ -91,7 +100,7 @@ export default function ContactSection() {
                                 </div>
                                 <div>
                                     <p className="text-[#25D366] font-display font-bold uppercase text-sm">WhatsApp</p>
-                                    <p className="text-white/50 text-xs mt-0.5">Réponse rapide · 78 282 96 73</p>
+                                    <p className="text-white/50 text-xs mt-0.5">Réponse rapide · {data?.whatsappNumber || fallbackContact.whatsappNumber}</p>
                                 </div>
                             </div>
                             <ArrowUpRight className="h-5 w-5 text-[#25D366]/60 group-hover:text-[#25D366] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
@@ -101,16 +110,16 @@ export default function ContactSection() {
                     {/* FAQ */}
                     <div className="lg:col-span-3">
                         <h3 className="font-display font-black text-white uppercase text-xl mb-6">
-                            Questions fréquentes
+                            {data?.faqLabel || fallbackContact.faqLabel}
                         </h3>
                         <div className="space-y-4">
-                            {FAQS.map((faq, i) => (
+                            {(data?.faqs || fallbackContact.faqs).map((faq, i) => (
                                 <div key={i}
-                                    className="group p-6 rounded-2xl border border-white/8 bg-white/2 hover:border-white/15 transition-all">
-                                    <div className="flex gap-4">
-                                        <span className="text-[#c0392b] font-display font-black text-sm flex-shrink-0 mt-0.5">Q.</span>
+                                    className="group p-6 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-md hover:border-white/15 hover:bg-white/10 transition-all duration-300">
+                                    <div className="flex gap-5">
+                                        <span className="text-[#c0392b] font-display font-black text-xl flex-shrink-0">Q.</span>
                                         <div>
-                                            <p className="text-white font-semibold text-sm mb-2">{faq.q}</p>
+                                            <p className="text-white font-display font-medium text-lg mb-2">{faq.q}</p>
                                             <p className="text-white/50 text-sm leading-relaxed">{faq.a}</p>
                                         </div>
                                     </div>
@@ -121,26 +130,25 @@ export default function ContactSection() {
                 </div>
 
                 {/* Final big CTA banner */}
-                <div className="relative rounded-2xl overflow-hidden p-10 sm:p-14 text-center"
-                    style={{ background: 'linear-gradient(135deg, #0d1f3c 0%, #1a0a08 100%)' }}>
-                    <div className="absolute inset-0 opacity-30"
+                <div className="relative rounded-[2.5rem] overflow-hidden p-12 sm:p-20 text-center shadow-2xl border border-white/10"
+                    style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
+                    <div className="absolute inset-0 opacity-40 mix-blend-screen"
                         style={{
-                            backgroundImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, rgba(192,57,43,0.4), transparent)',
+                            backgroundImage: 'radial-gradient(circle at 50% 100%, rgba(192,57,43,0.3), transparent 60%)',
                         }} />
                     <div className="relative z-10">
                         <p className="text-[#e5a800] text-xs font-bold uppercase tracking-[0.3em] mb-4">
-                            Prêt à commencer ?
+                            {data?.finalCtaLabel || fallbackContact.finalCtaLabel}
                         </p>
-                        <h3 className="font-display text-3xl sm:text-5xl font-black text-white uppercase mb-4">
-                            Première séance gratuite
+                        <h3 className="font-display text-4xl sm:text-6xl font-black text-white uppercase mb-6 tracking-tight">
+                            {data?.finalCtaTitle || fallbackContact.finalCtaTitle}
                         </h3>
-                        <p className="text-white/60 text-base max-w-xl mx-auto mb-8">
-                            Pas besoin d'expérience. Venez simplement en tenue de sport au DOJO lors d'une séance —
-                            <span className="text-white font-semibold"> Lundi, Mercredi ou Vendredi à 18h00.</span>
+                        <p className="text-white/70 text-base sm:text-lg max-w-2xl mx-auto mb-10 font-light leading-relaxed whitespace-pre-line">
+                            {data?.finalCtaDesc || fallbackContact.finalCtaDesc}
                         </p>
                         <a href={wa} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-3 px-10 py-4 rounded-full bg-[#c0392b] hover:bg-[#a93226] text-white font-display font-bold text-base uppercase tracking-wider transition-all shadow-2xl shadow-red-900/50 hover:-translate-y-0.5">
-                            Nous contacter sur WhatsApp
+                            className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-[#c0392b] to-[#e63946] hover:from-[#a93226] hover:to-[#c0392b] text-white font-display font-medium text-base uppercase tracking-wider transition-all duration-300 shadow-2xl shadow-red-900/40 hover:-translate-y-1">
+                            <span className="relative z-10">{data?.finalCtaButton || fallbackContact.finalCtaButton}</span>
                             <ArrowUpRight className="h-5 w-5" />
                         </a>
                     </div>

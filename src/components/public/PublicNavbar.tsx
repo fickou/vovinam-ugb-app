@@ -28,13 +28,13 @@ export default function PublicNavbar() {
     };
 
     return (
-        <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0a0f1e]/95 backdrop-blur-xl shadow-2xl shadow-black/50' : 'bg-transparent'}`}>
+        <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0f172a]/70 backdrop-blur-2xl border-b border-white/5 shadow-2xl shadow-black/20' : 'bg-transparent'}`}>
             <nav className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-[70px] sm:h-20">
 
                 {/* Brand */}
                 <button onClick={() => go('#hero')} className="flex items-center gap-3 group">
-                    <div className="h-20 w-20 rounded-lg  overflow-hidden ring-1 ring-white/30 group-hover:ring-white/5 transition-all duration-300 bg-white">
-                        <img src={logo} alt="Logo" className="h-full w-full object-contain scale-[1.6] origin-center" />
+                    <div className="h-20 w-20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                        <img src={logo} alt="Logo" className="w-full h-full object-contain scale-[1.3] origin-center drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]" />
                     </div>
                     <span className="font-display font-black text-white text-base tracking-widest uppercase hidden sm:inline">
                         Vovinam <span className="text-[#c0392b]">UGB</span>

@@ -23,8 +23,8 @@ export default function PublicFooter() {
                 {/* Brand col */}
                 <div className="md:col-span-4">
                     <div className="flex items-center gap-3 mb-5">
-                        <div className="h-11 w-11 rounded-xl overflow-hidden ring-1 ring-white/10 bg-white">
-                            <img src={logo} alt="Logo" className="h-full w-full object-contain scale-[1.7] origin-center" />
+                        <div className="h-16 w-16 flex items-center justify-center">
+                            <img src={logo} alt="Logo" className="w-full h-full object-contain scale-[1.3] origin-center drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
                         </div>
                         <div>
                             <div className="font-display font-black text-white uppercase tracking-wide text-sm">

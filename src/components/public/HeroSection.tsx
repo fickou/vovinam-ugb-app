@@ -1,18 +1,53 @@
+import { useState, useEffect } from 'react';
 import logo from '@/assets/logo.png';
 import vovinamLogo from '@/assets/logo-vovinam.png';
+import { cmsApi } from '@/lib/cms';
+import { HeroContent } from '@/types/cms';
+
+const fallbackContent: HeroContent = {
+    titleLine1: 'VOVINAM',
+    titleLine2: 'VIET VO DAO',
+    subtitle: 'Fondé en 1938 par Maître Nguyễn Lộc, le Vovinam est un art martial humaniste qui forge le corps, l\'esprit et le caractère. Rejoignez notre section à l\'Université Gaston Berger de Saint-Louis.',
+    ctaPrimaryText: 'Voir les entraînements',
+    ctaSecondaryText: 'Découvrir le Vovinam',
+};
 
 export default function HeroSection() {
+    const [data, setData] = useState<HeroContent>(fallbackContent);
+
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const settings = await cmsApi.getSettings('hero');
+                if (settings) {
+                    setData(settings);
+                }
+            } catch (err) {
+                console.error("Erreur chargement contenu hero", err);
+            }
+        };
+        fetchContent();
+    }, []);
+
     return (
-        <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#060b18]">
+        <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0f172a]">
 
             {/* === Layered background === */}
+            {data.backgroundImageUrl ? (
+                <div className="absolute inset-0">
+                    <img src={data.backgroundImageUrl} alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <div className="absolute inset-0 bg-[#0f172a]/70 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f172a]" />
+                </div>
+            ) : null}
+
             {/* Radial glow — center */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute inset-0"
-                    style={{ background: 'radial-gradient(ellipse 80% 70% at 50% 60%, rgba(192,57,43,0.12) 0%, transparent 70%)' }} />
+                    style={{ background: 'radial-gradient(ellipse 80% 70% at 50% 50%, rgba(192,57,43,0.08) 0%, transparent 70%)' }} />
                 {/* Top-left atmospheric light */}
-                <div className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full opacity-20"
-                    style={{ background: 'radial-gradient(circle, rgba(14,30,80,0.8), transparent 70%)' }} />
+                <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-30 mix-blend-screen blur-3xl"
+                    style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.4), transparent 70%)' }} />
                 {/* Diagonal stripe pattern */}
                 <div className="absolute inset-0 opacity-[0.03]"
                     style={{
@@ -21,7 +56,7 @@ export default function HeroSection() {
                     }} />
                 {/* Bottom vignette */}
                 <div className="absolute bottom-0 left-0 right-0 h-48"
-                    style={{ background: 'linear-gradient(to top, #060b18, transparent)' }} />
+                    style={{ background: 'linear-gradient(to top, #0f172a, transparent)' }} />
             </div>
 
             {/* === Vietnamese / geometric accent bars === */}
@@ -57,25 +92,23 @@ export default function HeroSection() {
 
                 {/* Main title */}
                 <h1 className="font-display text-[clamp(3.5rem,12vw,9rem)] font-black tracking-[-0.02em] leading-[0.9] text-white uppercase mb-8">
-                    VOVINAM<br />
+                    {data.titleLine1}<br />
                     <span className="relative inline-block">
                         <span
                             className="text-transparent"
                             style={{ WebkitTextStroke: '2px #c0392b' }}>
-                            VIET&nbsp;VO&nbsp;DAO
+                            {data.titleLine2}
                         </span>
                     </span>
                 </h1>
 
                 {/* Sub-tagline */}
-                <p className="max-w-2xl text-white/55 text-base sm:text-xl leading-relaxed mb-10 font-light">
-                    <span className="text-white/80 font-semibold">Fondé en 1938 par Maître Nguyễn Lộc,</span> le Vovinam est un art
-                    martial humaniste qui forge le corps, l'esprit et le caractère. Rejoignez notre
-                    section à l'Université Gaston Berger de Saint-Louis.
+                <p className="max-w-2xl text-white/55 text-base sm:text-xl leading-relaxed mb-10 font-light whitespace-pre-line">
+                    {data.subtitle}
                 </p>
 
-                {/* Stats row */}
-                <div className="flex flex-wrap justify-center gap-px mb-14 rounded-2xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm">
+                {/* Stats row - Glassmorphism */}
+                <div className="flex flex-wrap justify-center gap-px mb-14 rounded-3xl overflow-hidden border border-white/5 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/20">
                     {[
                         { n: '1938', sub: 'Fondation mondiale' },
                         { n: '2020', sub: 'Fondation UGB' },
@@ -90,16 +123,17 @@ export default function HeroSection() {
                 </div>
 
                 {/* CTAs */}
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-5">
                     <button
                         onClick={() => document.querySelector('#schedule')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="group px-10 py-4 rounded-full bg-[#c0392b] hover:bg-[#a93226] text-white font-display font-bold text-base uppercase tracking-wider transition-all duration-300 shadow-xl shadow-red-900/40 hover:shadow-red-900/70 hover:-translate-y-0.5">
-                        Voir les entraînements
+                        className="group flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-[#c0392b] to-[#e63946] hover:from-[#a93226] hover:to-[#c0392b] text-white font-display font-medium text-base tracking-wider transition-all duration-300 shadow-xl shadow-red-900/30 hover:shadow-red-900/50 hover:-translate-y-1">
+                        {data.ctaPrimaryText}
+                        <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                     </button>
                     <button
                         onClick={() => document.querySelector('#about')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="px-10 py-4 rounded-full border border-white/20 hover:border-white/50 text-white/80 hover:text-white font-display font-bold text-base uppercase tracking-wider transition-all duration-300 hover:bg-white/5 hover:-translate-y-0.5">
-                        Découvrir le Vovinam
+                        className="px-10 py-4 rounded-full border border-white/10 hover:border-white/30 text-white/80 hover:text-white font-display font-medium text-base tracking-wider transition-all duration-300 hover:bg-white/5 hover:-translate-y-1 shadow-lg shadow-black/10">
+                        {data.ctaSecondaryText}
                     </button>
                 </div>
             </div>

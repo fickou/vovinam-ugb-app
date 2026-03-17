@@ -50,8 +50,11 @@ const mainMenuItems = [
   { title: 'Rapports', url: '/dashboard/reports', icon: BarChart3 },
 ];
 
+import { Globe } from 'lucide-react';
+
 const adminMenuItems = [
   { title: 'Utilisateurs', url: '/dashboard/users', icon: UserCog },
+  { title: 'Site Public', url: '/dashboard/public-site', icon: Globe },
   { title: 'Paramètres', url: '/dashboard/settings', icon: Settings },
 ];
 

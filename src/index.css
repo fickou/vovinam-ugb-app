@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -54,23 +54,23 @@
   }
 
   .dark {
-    --background: 220 60% 8%;
-    --foreground: 0 0% 98%;
+    --background: 222 47% 11%; /* #0f172a - Slate 900 */
+    --foreground: 210 40% 98%; /* #f8fafc */
 
-    --card: 220 50% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 220 50% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 220 60% 20%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
 
     --secondary: 0 80% 50%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 30% 18%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
     --accent: 0 80% 50%;
     --accent-foreground: 0 0% 100%;
