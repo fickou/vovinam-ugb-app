@@ -54,8 +54,10 @@
   }
 
   .dark {
-    --background: 222 47% 11%; /* #0f172a - Slate 900 */
-    --foreground: 210 40% 98%; /* #f8fafc */
+    --background: 222 47% 11%;
+    /* #0f172a - Slate 900 */
+    --foreground: 210 40% 98%;
+    /* #f8fafc */
 
     --card: 222 47% 14%;
     --card-foreground: 210 40% 98%;
@@ -81,7 +83,7 @@
     --border: 220 30% 22%;
     --input: 220 30% 22%;
     --ring: 0 0% 83.9%;
-    
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -103,7 +105,12 @@
     font-family: 'Open Sans', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Oswald', sans-serif;
   }
 }
@@ -112,7 +119,7 @@
   .font-display {
     font-family: 'Oswald', sans-serif;
   }
-  
+
   .font-body {
     font-family: 'Open Sans', sans-serif;
   }
@@ -121,7 +128,7 @@
     .no-print {
       display: none !important;
     }
-    
+
     body {
       background: white !important;
     }
@@ -132,15 +139,33 @@
       margin-bottom: 20px !important;
       text-align: center !important;
     }
-    
+
     table {
       width: 100% !important;
       border-collapse: collapse !important;
     }
-    
-    th, td {
+
+    th,
+    td {
       border: 1px solid #ddd !important;
       padding: 8px !important;
     }
+  }
+
+  /* Flip Card Utilities */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
   }
 }

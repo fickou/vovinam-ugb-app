@@ -12,7 +12,7 @@ export default function AdminGalleryTab() {
     const [isUploading, setIsUploading] = useState(false);
 
     // Formulaire d'ajout rapide
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
+    const [uploadFiles, setUploadFiles] = useState<File[]>([]);
     const [uploadLabel, setUploadLabel] = useState('');
     const [uploadCategory, setUploadCategory] = useState('');
 
@@ -34,26 +34,30 @@ export default function AdminGalleryTab() {
     };
 
     const handleUpload = async () => {
-        if (!uploadFile) return toast.error("Veuillez sélectionner une image");
+        if (uploadFiles.length === 0) return toast.error("Veuillez sélectionner au moins une image");
         if (!uploadLabel) return toast.error("Veuillez entrer une description (label)");
         if (!uploadCategory) return toast.error("Veuillez entrer une catégorie");
 
         setIsUploading(true);
+        let successCount = 0;
         try {
-            // 1. Upload vers le bucket Supabase
-            const publicUrl = await cmsApi.uploadAsset(uploadFile, 'gallery');
+            for (const file of uploadFiles) {
+                // 1. Upload vers le bucket Supabase
+                const publicUrl = await cmsApi.uploadAsset(file, 'gallery');
 
-            // 2. Sauvegarde en DB
-            await cmsApi.addGalleryImage({
-                src: publicUrl,
-                label: uploadLabel,
-                cat: String(uploadCategory),
-            });
+                // 2. Sauvegarde en DB
+                await cmsApi.addGalleryImage({
+                    src: publicUrl,
+                    label: uploadLabel,
+                    cat: String(uploadCategory),
+                });
+                successCount++;
+            }
 
-            toast.success("Image ajoutée avec succès !");
+            toast.success(`${successCount} image(s) ajoutée(s) avec succès !`);
 
             // Reset form
-            setUploadFile(null);
+            setUploadFiles([]);
             setUploadLabel('');
             setUploadCategory('');
 
@@ -61,7 +65,7 @@ export default function AdminGalleryTab() {
             loadGallery();
         } catch (error) {
             console.error('Erreur upload:', error);
-            toast.error("Erreur lors de l'upload de l'image");
+            toast.error(`Erreur lors de l'upload. ${successCount} images ont été enregistrées.`);
         } finally {
             setIsUploading(false);
         }
@@ -81,14 +85,19 @@ export default function AdminGalleryTab() {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                toast.error("L'image est trop volumineuse (max 5 Mo)");
-                e.target.value = '';
-                return;
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            const validFiles: File[] = [];
+
+            for (const file of files) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    toast.error(`L'image ${file.name} est trop volumineuse (max 5 Mo)`);
+                    continue;
+                }
+                validFiles.push(file);
             }
-            setUploadFile(file);
+
+            setUploadFiles(validFiles);
         }
     };
 
@@ -110,13 +119,17 @@ export default function AdminGalleryTab() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500">Fichier image (Max 5 Mo)</label>
+                        <label className="text-xs font-medium text-gray-500">Images (Max 5 Mo chacune)</label>
                         <Input
                             type="file"
                             accept="image/*"
+                            multiple
                             onChange={handleFileChange}
                             className="bg-white cursor-pointer"
                         />
+                        {uploadFiles.length > 0 && (
+                            <p className="text-[10px] text-[#c0392b] font-bold uppercase">{uploadFiles.length} fichier(s) sélectionné(s)</p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-medium text-gray-500">Catégorie (ex: Lieu, Événement)</label>
@@ -127,7 +140,7 @@ export default function AdminGalleryTab() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-gray-500">Légende / Description brève</label>
+                        <label className="text-xs font-medium text-gray-500">Légende commune</label>
                         <Input
                             value={uploadLabel}
                             onChange={e => setUploadLabel(e.target.value)}
@@ -136,9 +149,9 @@ export default function AdminGalleryTab() {
                     </div>
                 </div>
                 <div className="mt-4 flex justify-end">
-                    <Button onClick={handleUpload} disabled={isUploading || !uploadFile} className="gap-2">
+                    <Button onClick={handleUpload} disabled={isUploading || uploadFiles.length === 0} className="gap-2">
                         {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Enregistrer l'image
+                        Enregistrer {uploadFiles.length > 1 ? `${uploadFiles.length} images` : "l'image"}
                     </Button>
                 </div>
             </div>

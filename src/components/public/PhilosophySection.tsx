@@ -119,22 +119,33 @@ export default function PhilosophySection() {
                         <span className="text-white/30 text-xs font-mono">1964</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {data.principles.map((p, i) => (
-                            <div key={i}
-                                className="group flex gap-6 p-7 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-md hover:border-[#c0392b]/30 hover:bg-white/10 hover:shadow-xl transition-all duration-300">
-                                {/* Number */}
-                                <div className="flex-shrink-0">
-                                    <div className="font-display text-[#c0392b]/40 font-black text-3xl leading-none group-hover:text-[#c0392b] transition-colors">
-                                        {p.num}
+                            <div key={i} className="group perspective-1000 h-[180px] sm:h-[150px]">
+                                <div className="relative w-full h-full transition-all duration-500 preserve-3d group-hover:rotate-y-180">
+                                    {/* Recto (Front) */}
+                                    <div className="absolute inset-0 backface-hidden flex items-center gap-6 p-7 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-md transition-all group-hover:border-white/10">
+                                        {/* Number */}
+                                        <div className="flex-shrink-0">
+                                            <div className="font-display text-[#c0392b]/40 font-black text-3xl leading-none group-hover:text-[#c0392b] transition-colors">
+                                                {p.num}
+                                            </div>
+                                        </div>
+                                        {/* Title */}
+                                        <div>
+                                            <h4 className="font-display font-bold text-white uppercase text-sm sm:text-base mb-1 group-hover:text-[#e5a800] transition-colors">
+                                                {p.title}
+                                            </h4>
+                                            <p className="text-white/20 text-[10px] uppercase tracking-widest font-bold">Survolez pour voir le détail</p>
+                                        </div>
                                     </div>
-                                </div>
-                                {/* Content */}
-                                <div>
-                                    <h4 className="font-display font-bold text-white uppercase text-sm mb-2 group-hover:text-[#e5a800] transition-colors">
-                                        {p.title}
-                                    </h4>
-                                    <p className="text-white/50 text-sm leading-relaxed">{p.text}</p>
+
+                                    {/* Verso (Back) */}
+                                    <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center p-7 rounded-3xl border border-[#c0392b]/30 bg-white/10 backdrop-blur-xl shadow-2xl shadow-[#c0392b]/10">
+                                        <p className="text-white/80 text-sm leading-relaxed italic font-light">
+                                            {p.text}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         ))}

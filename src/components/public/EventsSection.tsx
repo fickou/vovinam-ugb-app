@@ -89,8 +89,8 @@ export default function EventsSection() {
                                         {/* Image preview if available */}
                                         {event.images && event.images.length > 0 && (
                                             <div className="relative h-48 bg-gray-200 overflow-hidden">
-                                                <img 
-                                                    src={event.images[0]?.image_url} 
+                                                <img
+                                                    src={event.images[0]?.image_url}
                                                     alt={event.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                     onError={(e) => {
@@ -155,7 +155,7 @@ export default function EventsSection() {
                     <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
                         onClick={e => e.stopPropagation()}>
                         {/* Close button */}
-                        <button 
+                        <button
                             onClick={() => setSelectedEvent(null)}
                             className="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 z-10"
                         >
@@ -229,14 +229,14 @@ export default function EventsSection() {
             {selectedImage && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4"
                     onClick={() => setSelectedImage(null)}>
-                    <button 
+                    <button
                         onClick={() => setSelectedImage(null)}
                         className="absolute top-4 right-4 text-white hover:text-gray-300"
                     >
                         <X className="h-8 w-8" />
                     </button>
-                    <img 
-                        src={selectedImage} 
+                    <img
+                        src={selectedImage}
                         alt="Full size"
                         className="max-w-4xl max-h-[90vh] object-contain"
                         onClick={e => e.stopPropagation()}
