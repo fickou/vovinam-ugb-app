@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
+import { useTableResponsive } from '@/hooks/useTableResponsive';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -281,6 +282,8 @@ export default function Payments() {
 
   const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
+  const isMobileView = useTableResponsive();
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -487,7 +490,94 @@ export default function Payments() {
                 <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucun paiement enregistré</p>
               </div>
+            ) : isMobileView ? (
+              // MOBILE VIEW - CARD VIEW
+              <div className="space-y-3 px-3 py-4">
+                {payments.map((payment) => (
+                  <Card key={payment.id} className="p-4 border border-gray-200">
+                    {/* Header with member name and amount */}
+                    <div className="flex justify-between items-start mb-3 pb-3 border-b">
+                      <div className="flex-1 pr-2">
+                        <p className="font-semibold text-navy text-sm truncate">
+                          {payment.members ? `${payment.members.last_name} ${payment.members.first_name}` : '-'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(payment.payment_date).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-navy text-sm">{payment.amount.toLocaleString()} F</p>
+                        {getStatusBadge(payment.status)}
+                      </div>
+                    </div>
+
+                    {/* Details grid */}
+                    <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+                      <div>
+                        <span className="text-muted-foreground">Type:</span>
+                        <p className="font-medium text-gray-900">{getPaymentTypeLabel(payment.payment_type)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Méthode:</span>
+                        <p className="font-medium text-gray-900">{getMethodLabel(payment.payment_method)}</p>
+                      </div>
+                      {payment.month_number && (
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Mois:</span>
+                          <p className="font-medium text-gray-900">{monthNames[payment.month_number - 1]}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-3 border-t">
+                      {payment.proof_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(payment.proof_url!, '_blank')}
+                          className="flex-1 h-8 text-xs"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Preuve
+                        </Button>
+                      )}
+                      {canManage && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleValidate(payment)}
+                            className="flex-1 h-8 text-xs"
+                            title={payment.status === 'VALIDATED' ? 'Pendant' : 'Valider'}
+                          >
+                            <Check className={`h-3 w-3 mr-1 ${payment.status === 'VALIDATED' ? 'text-green-600' : ''}`} />
+                            {payment.status === 'VALIDATED' ? 'Validé' : 'Valider'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(payment)}
+                            className="h-8 px-3 text-xs"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSelectedPayment(payment); setIsDeleteDialogOpen(true); }}
+                            className="text-destructive h-8 px-3 text-xs hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ) : (
+              // DESKTOP VIEW - TABLE VIEW
               <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>

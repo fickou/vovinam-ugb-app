@@ -118,162 +118,175 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden p-4 sm:p-6 lg:p-8">
-      {/* Decorative background elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-navy/5 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-martial/5 rounded-full blur-3xl animate-pulse"></div>
-
-      <div className="w-full max-w-[440px] z-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        <div className="text-center space-y-4">
-          <div className="inline-block p-4 bg-white rounded-3xl shadow-xl shadow-navy/5 mb-2 transform transition-transform hover:scale-105 duration-500">
-            <img src={vovinamLogo} alt="Vovinam Logo" className="h-20 w-20 sm:h-24 sm:w-24 object-contain" />
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-display font-black tracking-tighter text-navy uppercase drop-shadow-sm">
-            Vovinam <span className="text-red-martial">UGB</span>
-          </h1>
-          <p className="text-slate-500 font-medium sm:text-lg">Portail de gestion du club sportif</p>
-        </div>
-
-        <Card className="border-none shadow-2xl shadow-navy/10 rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-          <CardContent className="p-0">
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-1 h-16 bg-navy/5 p-2 rounded-none">
-                <TabsTrigger
-                  value="login"
-                  className="rounded-[1.75rem] font-bold text-sm tracking-wide data-[state=active]:text-navy data-[state=active]:shadow-lg transition-all duration-300"
-                >
-                  CONNEXION
-                </TabsTrigger>
-              </TabsList>
-
-              <div className="p-8 sm:p-10">
-                <TabsContent value="login" className="mt-0 focus-visible:outline-none">
-                  <form onSubmit={handleLogin} className="space-y-6">
-                    <div className="space-y-2.5">
-                      <Label htmlFor="login-email" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Email professionnel</Label>
-                      <div className="relative group">
-                        <Input
-                          id="login-email"
-                          type="email"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          placeholder="votre@email.com"
-                          required
-                          className="h-14 px-6 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-navy focus:border-navy transition-all duration-300 font-medium placeholder:text-slate-300"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2.5">
-                      <div className="flex justify-between items-center ml-1">
-                        <Label htmlFor="login-password" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Mot de passe</Label>
-                        <button type="button" className="text-[10px] font-bold text-navy-light hover:text-navy transition-colors whitespace-nowrap">OUBLIÉ ?</button>
-                      </div>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="h-14 px-6 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-navy focus:border-navy transition-all duration-300 font-medium placeholder:text-slate-300"
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full h-14 rounded-2xl bg-navy hover:bg-black text-white font-bold text-base tracking-[0.1em] transition-all duration-500 shadow-xl shadow-navy/20 active:scale-[0.98] group"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          <span>AUTHENTIFICATION...</span>
-                        </div>
-                      ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          ACCÉDER AU TABLEAU <span className="text-white/50 group-hover:translate-x-1 transition-transform">→</span>
-                        </span>
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="signup" className="mt-0 focus-visible:outline-none">
-                  <form onSubmit={handleSignup} className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2.5">
-                        <Label htmlFor="firstName" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Prénom</Label>
-                        <Input
-                          id="firstName"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="Ex: Jean"
-                          required
-                          className="h-14 px-6 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-red-martial focus:border-red-martial transition-all duration-300 font-medium"
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="lastName" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Nom</Label>
-                        <Input
-                          id="lastName"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          placeholder="Ex: Dupont"
-                          required
-                          className="h-14 px-6 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-red-martial focus:border-red-martial transition-all duration-300 font-medium"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2.5">
-                      <Label htmlFor="signup-email" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        placeholder="votre@email.com"
-                        required
-                        className="h-14 px-6 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-red-martial focus:border-red-martial transition-all duration-300 font-medium"
-                      />
-                    </div>
-                    <div className="space-y-2.5">
-                      <Label htmlFor="signup-password" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Mot de passe</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="h-14 px-6 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-red-martial focus:border-red-martial transition-all duration-300 font-medium"
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full h-14 rounded-2xl bg-red-martial hover:bg-black text-white font-bold text-base tracking-[0.1em] transition-all duration-500 shadow-xl shadow-red-martial/20 active:scale-[0.98] group"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          <span>CRÉATION...</span>
-                        </div>
-                      ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          CRÉER MON COMPTE <span className="text-white/50 group-hover:translate-x-1 transition-transform">→</span>
-                        </span>
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <p className="text-center text-slate-400 text-xs font-bold tracking-widest uppercase pb-8 sm:pb-0">
-          © {new Date().getFullYear()} Vovinam UGB • Excellence & Tradition
-        </p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-6 sm:py-10 bg-gradient-to-b from-navy to-navy/90">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-red-martial/5 rounded-full blur-3xl" />
       </div>
+
+      <Card className="w-full max-w-sm relative z-10 shadow-2xl shadow-black/50">
+        {/* Logo */}
+        <CardHeader className="pb-4 sm:pb-6">
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl border border-white/10 bg-navy/10 p-2 sm:p-3 flex items-center justify-center">
+              <img src={vovinamLogo} alt="Vovinam Logo" className="h-full w-full object-contain" />
+            </div>
+          </div>
+
+          <CardTitle className="text-center text-xl sm:text-2xl">Vovinam UGB SC</CardTitle>
+          <CardDescription className="text-center text-xs sm:text-sm">Connexion à votre espace</CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          {/* Responsive Tabs */}
+          <Tabs 
+            defaultValue="login" 
+            className="w-full"
+            onValueChange={() => {
+              /* Reset form on tab change */
+              setLoginEmail('');
+              setLoginPassword('');
+              setSignupEmail('');
+              setSignupPassword('');
+              setFirstName('');
+              setLastName('');
+            }}
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-4 h-10">
+              <TabsTrigger value="login" className="text-xs sm:text-sm">Connexion</TabsTrigger>
+              <TabsTrigger value="signup" className="text-xs sm:text-sm">Inscription</TabsTrigger>
+            </TabsList>
+
+            {/* LOGIN TAB */}
+            <TabsContent value="login" className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email" className="text-xs sm:text-sm">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="h-10 sm:h-11"
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="login-password" className="text-xs sm:text-sm">Mot de passe</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="h-10 sm:h-11"
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  disabled={isLoading} 
+                  className="w-full h-10 sm:h-11 bg-navy hover:bg-navy-light text-sm"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Connexion...
+                    </span>
+                  ) : (
+                    'Se connecter'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {/* SIGNUP TAB */}
+            <TabsContent value="signup" className="space-y-3">
+              <form onSubmit={handleSignup} className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name" className="text-xs sm:text-sm">Prénom</Label>
+                    <Input
+                      id="first-name"
+                      placeholder="Jean"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="h-10 sm:h-11 text-sm"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name" className="text-xs sm:text-sm">Nom</Label>
+                    <Input
+                      id="last-name"
+                      placeholder="Dupont"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="h-10 sm:h-11 text-sm"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email" className="text-xs sm:text-sm">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    className="h-10 sm:h-11 text-sm"
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password" className="text-xs sm:text-sm">Mot de passe</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    className="h-10 sm:h-11 text-sm"
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  disabled={isLoading} 
+                  className="w-full h-10 sm:h-11 bg-navy hover:bg-navy-light text-sm"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Inscription...
+                    </span>
+                  ) : (
+                    "S'inscrire"
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <p className="text-center text-slate-400 text-xs font-bold tracking-widest uppercase pt-8">
+        © {new Date().getFullYear()} Vovinam UGB • Excellence & Tradition
+      </p>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { cmsApi } from '@/lib/cms';
 import { GalleryImage } from '@/types/cms';
 
 export default function GallerySection() {
-    const [active, setActive] = useState('Tous');
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [lb, setLb] = useState<GalleryImage | null>(null);
     const [isLoading, setIsLoading] = useState(true);

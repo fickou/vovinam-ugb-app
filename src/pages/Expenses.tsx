@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
+import { useTableResponsive } from '@/hooks/useTableResponsive';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -144,6 +145,8 @@ export default function Expenses() {
 
     const totalAmount = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
+    const isMobileView = useTableResponsive();
+
     return (
         <DashboardLayout>
             <div className="space-y-6">
@@ -196,7 +199,63 @@ export default function Expenses() {
                                 <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                 <p>Aucune dépense trouvée</p>
                             </div>
+                        ) : isMobileView ? (
+                            // MOBILE VIEW - CARD VIEW
+                            <div className="space-y-3 px-3 py-4">
+                                {filteredExpenses.map((expense) => (
+                                    <Card key={expense.id} className="p-4 border border-gray-200">
+                                        {/* Header with description and amount */}
+                                        <div className="flex justify-between items-start mb-3 pb-3 border-b">
+                                            <div className="flex-1 pr-2">
+                                                <p className="font-semibold text-navy text-sm line-clamp-2">
+                                                    {expense.description}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    {new Date(expense.expense_date).toLocaleDateString('fr-FR')}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-red-600 text-sm">-{expense.amount.toLocaleString()} F</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Details grid */}
+                                        <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+                                            <div>
+                                                <span className="text-muted-foreground">Catégorie:</span>
+                                                <p className="font-medium text-gray-900">{expense.category}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground">Saison:</span>
+                                                <p className="font-medium text-gray-900">{expense.seasons?.name || '-'}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex gap-2 pt-3 border-t">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => openEditDialog(expense)}
+                                                className="flex-1 h-8 text-xs"
+                                            >
+                                                <Pencil className="h-3 w-3 mr-1" />
+                                                Modifier
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => { setSelectedExpense(expense); setIsDeleteDialogOpen(true); }}
+                                                className="text-destructive h-8 px-3 text-xs hover:bg-destructive/10"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
                         ) : (
+                            // DESKTOP VIEW - TABLE VIEW
                             <div className="overflow-x-auto w-full">
                                 <Table>
                                     <TableHeader>

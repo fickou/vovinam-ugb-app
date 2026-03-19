@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
+import { useTableResponsive } from '@/hooks/useTableResponsive';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,6 +61,7 @@ export default function Members() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const isMobileView = useTableResponsive();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -185,6 +187,172 @@ export default function Members() {
     return <Badge className={colors[status] || 'bg-gray-100'}>{labels[status] || status}</Badge>;
   };
 
+  // Mobile view - Card layout
+  if (isMobileView) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-2xl font-display font-bold text-navy">Pratiquants</h1>
+              <p className="text-xs text-muted-foreground">Gérez les membres</p>
+            </div>
+            {isAdmin && (
+              <Button onClick={() => setIsDialogOpen(true)} size="sm" className="bg-navy hover:bg-navy-light">
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Rechercher..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+
+          {/* Mobile Status Filter */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Filtrer..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="active">Actif</SelectItem>
+              <SelectItem value="new">Nouveau</SelectItem>
+              <SelectItem value="suspended">Suspendu</SelectItem>
+              <SelectItem value="former">Ancien</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Mobile Card List */}
+          <div className="space-y-3">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-sm text-muted-foreground">Chargement...</p>
+              </div>
+            ) : filteredMembers.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">Aucun pratiquant trouvé</p>
+            ) : (
+              filteredMembers.map((member) => (
+                <Card key={member.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm truncate">
+                        {member.first_name} {member.last_name}
+                      </h3>
+
+                      {member.email && (
+                        <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                      )}
+
+                      {member.phone && (
+                        <p className="text-xs text-muted-foreground truncate">{member.phone}</p>
+                      )}
+
+                      {member.member_number && (
+                        <p className="text-xs text-muted-foreground mt-1">#{member.member_number}</p>
+                      )}
+
+                      <div className="flex gap-2 mt-3">
+                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                          {member.status}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {new Date(member.created_at).toLocaleDateString('fr-FR')}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {isAdmin && (
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        <Button size="sm" variant="outline" onClick={() => openEditDialog(member)} className="h-8">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setSelectedMember(member);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Dialog for Add/Edit */}
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{selectedMember ? 'Modifier le pratiquant' : 'Ajouter un pratiquant'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first_name" className="text-xs sm:text-sm">Prénom</Label>
+                  <Input id="first_name" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} required className="h-10 sm:h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name" className="text-xs sm:text-sm">Nom</Label>
+                  <Input id="last_name" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} required className="h-10 sm:h-11" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-xs sm:text-sm">Téléphone</Label>
+                <Input id="phone" type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-10 sm:h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs sm:text-sm">Email</Label>
+                <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-10 sm:h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-xs sm:text-sm">Statut</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger className="h-10 sm:h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="new">Nouveau</SelectItem>
+                    <SelectItem value="suspended">Suspendu</SelectItem>
+                    <SelectItem value="former">Ancien</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" className="w-full bg-navy hover:bg-navy-light h-10 sm:h-11">
+                {selectedMember ? 'Modifier' : 'Ajouter'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer {selectedMember?.first_name} {selectedMember?.last_name} ?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DashboardLayout>
+    );
+  }
+
+  // Desktop view - Table layout
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -201,12 +369,10 @@ export default function Members() {
                 Imprimer la liste
               </Button>
               {isAdmin && (
-                <DialogTrigger asChild>
-                  <Button className="bg-navy hover:bg-navy-light">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nouveau pratiquant
-                  </Button>
-                </DialogTrigger>
+                <Button className="bg-navy hover:bg-navy-light" onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau pratiquant
+                </Button>
               )}
             </div>
             <DialogContent>
