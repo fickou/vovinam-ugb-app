@@ -62,6 +62,7 @@ function AppSidebar() {
   const location = useLocation();
   const { isAdmin, isStaff, signOut, user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const handleSignOut = async () => {
     await signOut();
@@ -76,7 +77,7 @@ function AppSidebar() {
         {/* Logo Header - Responsive */}
         <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3 border-b border-navy-light">
           <img src={vovinamLogo} alt="Logo" className="h-8 w-8 sm:h-10 sm:w-10 object-contain flex-shrink-0" />
-          <div className="hidden sm:block min-w-0">
+          <div className="min-w-0">
             <h2 className="font-display text-base sm:text-lg font-bold leading-none whitespace-nowrap">VOVINAM</h2>
             <p className="text-xs text-white/70 leading-tight mt-0.5">UGB SC</p>
           </div>
@@ -98,16 +99,10 @@ function AppSidebar() {
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                       title={item.title}
+                      onClick={() => isMobile && setOpenMobile(false)}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
-
-                      {/* Hide label on mobile, show on sm+ */}
-                      <span className="hidden sm:inline truncate">{item.title}</span>
-
-                      {/* Tooltip on mobile */}
-                      <div className="sm:hidden absolute left-12 top-2 bg-white/90 text-navy text-xs font-semibold px-2 py-1 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                        {item.title}
-                      </div>
+                      <span className="truncate">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -133,14 +128,10 @@ function AppSidebar() {
                             : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
                         title={item.title}
+                        onClick={() => isMobile && setOpenMobile(false)}
                       >
                         <item.icon className="h-5 w-5 flex-shrink-0" />
-
-                        <span className="hidden sm:inline truncate">{item.title}</span>
-
-                        <div className="sm:hidden absolute left-12 top-2 bg-white/90 text-navy text-xs font-semibold px-2 py-1 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                          {item.title}
-                        </div>
+                        <span className="truncate">{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -152,7 +143,7 @@ function AppSidebar() {
 
         {/* User Section - Responsive */}
         <div className="mt-auto p-2 sm:p-4 border-t border-navy-light space-y-2">
-          <div className="hidden sm:block">
+          <div>
             <p className="text-xs text-white/60 font-semibold mb-2">Connecté</p>
             <p className="text-xs text-white/80 truncate font-medium">{user?.email}</p>
           </div>
@@ -163,7 +154,7 @@ function AppSidebar() {
             className="w-full bg-transparent border-white/30 text-white hover:bg-white/10 h-9"
           >
             <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Déconnexion</span>
+            <span className="ml-2">Déconnexion</span>
           </Button>
         </div>
       </SidebarContent>
