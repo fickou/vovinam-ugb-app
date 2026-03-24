@@ -125,12 +125,13 @@ export default function Auth() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-red-martial/5 rounded-full blur-3xl" />
       </div>
 
+
       <Card className="w-full max-w-sm relative z-10 shadow-2xl shadow-black/50">
         {/* Logo */}
         <CardHeader className="pb-4 sm:pb-6">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl border border-white/10 bg-navy/10 p-2 sm:p-3 flex items-center justify-center">
-              <img src={vovinamLogo} alt="Vovinam Logo" className="h-full w-full object-contain" />
+            <div className="h-16 w-16 rounded-xl border flex items-center">
+              <img src={vovinamLogo} alt="Vovinam Logo" className="object-contain" />
             </div>
           </div>
 
@@ -284,8 +285,8 @@ export default function Auth() {
         </CardContent>
       </Card>
 
-      <p className="text-center text-slate-400 text-xs font-bold tracking-widest uppercase pt-8">
-        © {new Date().getFullYear()} Vovinam UGB • Excellence & Tradition
+      <p className="fixed bottom-4 left-0 right-0 text-center text-slate-400 text-xs font-bold tracking-widest uppercase z-10">
+        © {new Date().getFullYear()} Vovinam UGB • Excellence &amp; Tradition
       </p>
     </div>
   );
