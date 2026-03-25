@@ -1,96 +1,39 @@
-# Vovinam UGB Reminders - Système de Gestion
+# Plateforme de Gestion de Club de Vovinam Viet Vo Dao (UGB)
 
-Bienvenue dans le projet **Vovinam UGB Reminders**. Cette application est conçue pour gérer les membres, les saisons et les paiements d'un club de Vovinam Viet Vo Dao.
+L'application est un système complet de gestion (Dashboard/ERP) conçu sur mesure pour numériser, structurer et faciliter l'administration quotidienne du club de Vovinam Viet Vo Dao de l'Université Gaston Berger (UGB). Elle permet de centraliser toutes les opérations essentielles du club dans une interface unique, moderne et sécurisée.
 
-Cette version spécifique est une architecture autonome utilisant **PHP** pour le backend et **MySQL** pour la base de données.
+**Fonctionnalités clés :**
+*   **Gestion de la Vie du Club :** Inscription, profils, suivi des grades et historique des membres (`/members`, `/seasons`).
+*   **Gestion Financière :** Suivi rigoureux des cotisations mensuelles, des dépenses du club et des autres paiements (`/cotisations`, `/expenses`, `/payments`).
+*   **Générateur de Cartes :** Outil intégré permettant de créer, visualiser et exporter automatiquement les cartes d'identité sportives des membres (`/card`).
+*   **Tableau de Bord & Rapports :** Visualisation globale de la santé financière et de l'évolution des effectifs via des graphiques interactifs (`/dashboard`, `/reports`).
+*   **Gestion du Bureau :** Mise en valeur des membres du bureau directeur et de leurs rôles (`/board`).
+*   **Communication :** Interface d'administration du site public (`/public-site`) et système de gestion des rappels (`/reminders`).
 
----
+### 2. Public cible et Rôles
+Cette application est conçue pour être utilisée par l'ensemble des acteurs du club, avec un système de droits d'accès sécurisé (RBAC - Role-Based Access Control) :
 
-## 🚀 Technologies utilisées
+*   **Administrateurs (Super-Admins / Président) :** Accès total. Ils peuvent gérer la configuration globale du club, attribuer des rôles aux autres utilisateurs (`/users`, `/settings`), et superviser l'ensemble des données.
+*   **Le Staff du Bureau (Trésorier, Secrétaire...) :** Accès aux outils opérationnels. Le trésorier a accès à la gestion financière (ajout de paiements, dépenses), tandis que le secrétaire peut gérer les membres, mettre à jour les grades, et générer les cartes.
+*   **Les Pratiquants (Membres standards) :** Ils disposent d'un compte pour consulter leur profil, vérifier l'état de leurs cotisations pour la saison en cours et s'informer sur les contacts du bureau. 
 
-### Frontend
-- **React** (avec Vite & TypeScript)
-- **Tailwind CSS** pour le stylage
-- **Shadcn UI** pour les composants d'interface
-- **Lucide React** pour les icônes
-- **TanStack Query** (React Query) pour la gestion d'état des données
 
-### Backend
-- **PHP 8.0+** (API REST native)
-- **MySQL / MariaDB** pour le stockage
-- **PDO** pour la connexion à la base de données sécurisée
+**Stack Technique :**
+*   **Frontend :** React 18, TypeScript, Vite
+*   **Interface (UI) :** Tailwind CSS, Shadcn UI, Radix UI, Lucide React
+*   **Backend & Base de données :** Supabase (Auth, PostgreSQL, Row Level Security)
+*   **Traitement de données :** React Query (`@tanstack/react-query`), React Router DOM
+*   **Utilitaires :** Zod (validation), React Hook Form, Recharts (graphiques), html2canvas/jspdf (génération de cartes)
 
----
+### 3. Quelles captures d’écran
 
-## 📁 Structure du Projet
-
-```text
-copie/
-├── api/            # Backend PHP (Endpoints API)
-│   ├── auth/       # Gestion de la connexion et inscription
-│   ├── config.php  # Configuration de la base de données
-│   ├── utils.php   # Fonctions utilitaires (JSON, UUID, etc.)
-│   └── *.php       # Ressources (members, payments, seasons, etc.)
-├── mysql/          # Scripts de base de données
-│   └── schema.sql  # Structure de la base de données
-├── src/            # Frontend React + TypeScript
-│   ├── components/ # Composants réutilisables
-│   ├── pages/      # Vues principales de l'application
-│   ├── lib/        # Utilitaires frontend (client API)
-│   └── hooks/      # Hooks personnalisés
-└── migrate.php     # Script de migration Supabase -> MySQL
-```
-
----
-
-## 🛠️ Installation et Configuration
-
-### 1. Base de données
-1. Créez une base de données MySQL nommée `vovinam_ugb`.
-2. Importez le fichier `mysql/schema.sql` :
-   ```bash
-   mysql -u utilisateur -p vovinam_ugb < mysql/schema.sql
-   ```
-
-### 2. Backend PHP
-1. Configurez vos accès dans `api/config.php`.
-2. Assurez-vous que votre serveur web (Apache/PHP) pointe vers le dossier `api`.
-3. Pour le développement local, vous pouvez lancer :
-   ```bash
-   cd api
-   php -S localhost:8000
-   ```
-
-### 3. Frontend React
-1. Installez les dépendances :
-   ```bash
-   npm install
-   ```
-2. Configurez le fichier `.env` si nécessaire (base URL de l'API).
-3. Lancez le serveur de développement :
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 💡 Fonctionnalités Principales
-
-- **Tableau de Bord** : Statistiques globales sur les membres et les paiements.
-- **Gestion des Membres** : Ajout, modification, suppression et suivi du statut des pratiquants.
-- **Suivi des Paiements** : Enregistrement des inscriptions et des mensualités avec support des modes de paiement (Wave, Espèces, etc.).
-- **Gestion des Saisons** : Configuration des frais d'inscription et des cotisations mensuelles par saison.
-- **Génération de Rapports** (En cours) : Visualisation des performances financières.
-
----
-
-## 🔄 Migration (Optionnel)
-
-Si vous venez de l'ancienne version Supabase :
-1. Configurez `migrate.php` avec vos anciennes et nouvelles informations de connexion.
-2. Exécutez le script : `php migrate.php`.
-
----
-
-## 👤 Auteur
-Projet développé par fickou.dev pour le club Vovinam UGB SC.
+1.  **Le Dashboard Principal (`/dashboard`) :** 
+![Dashboard](/docs/dashboard.png)
+2.  **Le Générateur de Cartes (`/dashboard/card`) :** 
+![Carte](/docs/carte.png)
+3.  **La Table des paiements (`/dashboard/cotisations`) :** 
+![payement](/docs/payement.png)
+4.  **La Table des membres (`/dashboard/members`) :** 
+![members](/docs/members.png)
+5.  **Une Capture Mobile :** 
+![Site public](/docs/public.png)

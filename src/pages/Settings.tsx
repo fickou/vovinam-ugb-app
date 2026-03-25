@@ -22,19 +22,17 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth, AppRole } from '@/hooks/useAuth';
 import { Settings as SettingsIcon, Users, Shield, Zap, Save, Trash2, Plus } from 'lucide-react';
 
-interface Profile {
+interface Member {
   id: string;
-  user_id: string;
   first_name: string;
   last_name: string;
+  email: string;
 }
 
 interface UserRole {
-  id: string;
   user_id: string;
+  user_email?: string;
   role: string;
-  first_name?: string;
-  last_name?: string;
 }
 
 interface ClubSettings {
@@ -47,7 +45,7 @@ interface ClubSettings {
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
@@ -64,12 +62,12 @@ export default function Settings() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<UserRole | null>(null);
 
-  // Index profiles by user_id for O(1) lookup
-  const profilesMap = useMemo(() => {
-    const map = new Map<string, Profile>();
-    profiles.forEach(p => map.set(p.user_id, p));
+  // Index members by ID for O(1) lookup
+  const membersMap = useMemo(() => {
+    const map = new Map<string, Member>();
+    members.forEach(m => map.set(m.id, m));
     return map;
-  }, [profiles]);
+  }, [members]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -80,27 +78,21 @@ export default function Settings() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('id, user_id, first_name, last_name').order('last_name'),
-        supabase.from('user_roles').select('id, user_id, role, profiles(first_name, last_name)').order('created_at', { ascending: false }),
+      const [membersRes, rolesRes] = await Promise.all([
+        supabase.from('members').select('id, first_name, last_name, email').order('last_name'),
+        supabase.from('user_roles').select('*').order('created_at', { ascending: false }),
       ]);
 
-      setProfiles(profilesRes.data || []);
-
-      const mapped = (rolesRes.data || []).map((ur: any) => ({
-        id: ur.id,
-        user_id: ur.user_id,
-        role: ur.role,
-        first_name: ur.profiles?.first_name || '',
-        last_name: ur.profiles?.last_name || '',
-      }));
-      setUserRoles(mapped);
+      setMembers(membersRes.data || []);
+      setUserRoles(rolesRes.data || []);
     } catch (error: any) {
       console.error('Error fetching data:', error);
+      // Only show toast if it's not a "table doesn't exist" error
       if (!error?.message?.includes('relation') && !error?.message?.includes('user_roles')) {
         toast({ title: 'Erreur', description: 'Impossible de charger les données', variant: 'destructive' });
       }
-      setProfiles([]);
+      // Set empty roles if user_roles table doesn't exist yet
+      setMembers([]);
       setUserRoles([]);
     } finally {
       setLoading(false);
@@ -140,17 +132,9 @@ export default function Settings() {
 
     setLoading(true);
     try {
-      // selectedUserId is a profile id, get the auth user_id
-      const profile = profiles.find(p => p.id === selectedUserId);
-      if (!profile) {
-        toast({ title: 'Erreur', description: 'Profil introuvable', variant: 'destructive' });
-        setLoading(false);
-        return;
-      }
-
       // Check if role already exists
       const existing = userRoles.find(
-        r => r.user_id === profile.user_id && r.role === selectedRole
+        r => r.user_id === selectedUserId && r.role === selectedRole
       );
 
       if (existing) {
@@ -163,9 +147,9 @@ export default function Settings() {
         return;
       }
 
-      // Insert using the auth user_id
+      // Try to insert - if table doesn't exist, show friendly error
       const { error } = await supabase.from('user_roles').insert([{
-        user_id: profile.user_id,
+        user_id: selectedUserId,
         role: selectedRole as AppRole,
       }]);
 
@@ -402,9 +386,9 @@ export default function Settings() {
                     <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                       <SelectTrigger className="h-10 sm:h-11"><SelectValue placeholder="Sélectionner un utilisateur" /></SelectTrigger>
                       <SelectContent>
-                        {profiles.map(p => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.first_name} {p.last_name}
+                        {members.map(m => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.first_name} {m.last_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -463,12 +447,10 @@ export default function Settings() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">
-                            {uRole.first_name || uRole.last_name
-                              ? `${uRole.first_name} ${uRole.last_name}`
-                              : 'Sans profil'}
+                            {membersMap.get(uRole.user_id)?.first_name} {membersMap.get(uRole.user_id)?.last_name}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {profilesMap.get(uRole.user_id)?.first_name ? 'Profil lié' : 'ID: ' + uRole.user_id.slice(0, 8) + '...'}
+                            {membersMap.get(uRole.user_id)?.email}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -506,31 +488,34 @@ export default function Settings() {
                     <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-muted-foreground text-sm">Chargement...</p>
                   </div>
-                ) : profiles.length === 0 ? (
+                ) : members.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="text-sm">Aucun utilisateur trouvé</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                    {profiles.map((profile) => {
-                      const profileRoles = userRoles.filter(r => r.user_id === profile.user_id);
+                    {members.map((member) => {
+                      const memberRoles = userRoles.filter(r => r.user_id === member.id);
                       return (
                         <div
-                          key={profile.id}
+                          key={member.id}
                           className="p-4 border rounded-lg hover:bg-muted/30 space-y-2"
                         >
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-sm sm:text-base">
-                                {profile.first_name} {profile.last_name}
+                                {member.first_name} {member.last_name}
+                              </p>
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                                {member.email || 'Pas d\'email'}
                               </p>
                             </div>
                           </div>
-                          {profileRoles.length > 0 && (
+                          {memberRoles.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                              {profileRoles.map((role) => (
-                                <div key={`${profile.id}-${role.role}`}>
+                              {memberRoles.map((role) => (
+                                <div key={`${member.id}-${role.role}`}>
                                   {getRoleBadge(role.role)}
                                 </div>
                               ))}
