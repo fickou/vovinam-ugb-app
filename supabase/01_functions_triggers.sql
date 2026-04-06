@@ -58,8 +58,9 @@ DECLARE
 BEGIN
   -- 1. Insérer dans profiles avec gestion d'erreur
   BEGIN
-    INSERT INTO public.profiles (user_id, first_name, last_name)
+    INSERT INTO public.profiles (id, user_id, first_name, last_name)
     VALUES (
+      gen_random_uuid()::text,
       NEW.id::text,
       COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
       COALESCE(NEW.raw_user_meta_data->>'last_name', '')
@@ -71,16 +72,14 @@ BEGIN
   END;
 
   -- 2. Insérer dans user_roles avec gestion d'erreur
-  -- Note: On cast 'default_role' en texte pour être compatible avec n'importe quel Enum
   BEGIN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id::text, default_role::text::user_role_type) -- Tentative de cast vers le type probable
+    INSERT INTO public.user_roles (id, user_id, role)
+    VALUES (gen_random_uuid()::text, NEW.id::text, default_role::public.app_role)
     ON CONFLICT (user_id) DO NOTHING;
   EXCEPTION WHEN OTHERS THEN
-    -- Si user_role_type n'existe pas ou erreur, on tente une insertion brute
     BEGIN
-      INSERT INTO public.user_roles (user_id, role)
-      VALUES (NEW.id::text, default_role)
+      INSERT INTO public.user_roles (id, user_id, role)
+      VALUES (gen_random_uuid()::text, NEW.id::text, default_role::text)
       ON CONFLICT (user_id) DO NOTHING;
     EXCEPTION WHEN OTHERS THEN
       RAISE WARNING 'Erreur lors de l''attribution du rôle pour %: %', NEW.id, SQLERRM;

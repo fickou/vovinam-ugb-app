@@ -21,6 +21,7 @@ import Cotisations from "./pages/Cotisations";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import AdminPublicSite from "./pages/AdminPublicSite";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,8 +43,13 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <ProtectedRoute requireStaff>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/profile" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/members" element={
@@ -57,7 +63,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/dashboard/payments" element={
-              <ProtectedRoute>
+              <ProtectedRoute requireStaff>
                 <Payments />
               </ProtectedRoute>
             } />
@@ -77,7 +83,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/dashboard/board" element={
-              <ProtectedRoute>
+              <ProtectedRoute requireStaff>
                 <BoardMembers />
               </ProtectedRoute>
             } />

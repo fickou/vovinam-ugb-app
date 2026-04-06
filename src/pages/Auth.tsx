@@ -31,15 +31,19 @@ export default function Auth() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isStaff } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      if (isStaff) {
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard/profile');
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, isStaff]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,8 +115,8 @@ export default function Auth() {
       });
     } else {
       toast({
-        title: 'Inscription réussie',
-        description: 'Votre compte a été créé avec succès !',
+        title: 'Demande envoyée',
+        description: 'Votre demande d\'inscription est en attente de validation par l\'administrateur.',
       });
     }
   };
@@ -276,7 +280,7 @@ export default function Auth() {
                       Inscription...
                     </span>
                   ) : (
-                    "S'inscrire"
+                    "Effectuer une demande"
                   )}
                 </Button>
               </form>

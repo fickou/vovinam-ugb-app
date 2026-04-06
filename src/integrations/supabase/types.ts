@@ -12,6 +12,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      demandes: {
+        Row: {
+          id: string
+          user_id: string
+          email: string
+          first_name: string
+          last_name: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email: string
+          first_name: string
+          last_name: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email?: string
+          first_name?: string
+          last_name?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       board_members: {
         Row: {
           created_at: string
@@ -207,6 +237,7 @@ export type Database = {
           photo_url: string | null
           updated_at: string
           user_id: string
+          status: string
         }
         Insert: {
           created_at?: string
@@ -217,6 +248,7 @@ export type Database = {
           photo_url?: string | null
           updated_at?: string
           user_id: string
+          status?: string
         }
         Update: {
           created_at?: string
@@ -227,6 +259,7 @@ export type Database = {
           photo_url?: string | null
           updated_at?: string
           user_id?: string
+          status?: string
         }
         Relationships: []
       }

@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 type AppRole = 'super_admin' | 'admin' | 'treasurer' | 'coach' | 'member';
 
@@ -28,10 +30,22 @@ interface UserWithRole {
   email?: string;
   first_name?: string;
   last_name?: string;
+  status?: string;
+}
+
+export interface Demande {
+  id: string;
+  user_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  status: string;
+  created_at: string;
 }
 
 export default function Users() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [demandes, setDemandes] = useState<Demande[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -50,22 +64,38 @@ export default function Users() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    // Fetch user_roles and join with profiles
-    const { data: userRoles, error } = await supabase
+    
+    // Fetch user_roles and profiles for Active users
+    const { data: userRoles, error: rolesError } = await supabase
       .from('user_roles')
-      .select('id, user_id, role, profiles(first_name, last_name)');
+      .select('id, user_id, role');
 
-    if (error) {
-      toast({ title: 'Erreur', description: 'Impossible de charger les utilisateurs', variant: 'destructive' });
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('user_id, first_name, last_name');
+
+    // Fetch pending demandes
+    const { data: demandesData, error: demandesError } = await supabase
+      .from('demandes')
+      .select('*')
+      .eq('status', 'pending');
+
+    if (rolesError || profilesError || demandesError) {
+      toast({ title: 'Erreur', description: 'Impossible de charger les données', variant: 'destructive' });
+      console.error(rolesError || profilesError || demandesError);
     } else {
-      const mapped = (userRoles || []).map((ur: any) => ({
-        id: ur.id,
-        user_id: ur.user_id,
-        role: ur.role,
-        first_name: ur.profiles?.first_name || '',
-        last_name: ur.profiles?.last_name || '',
-      }));
+      const mapped = (userRoles || []).map((ur: any) => {
+        const userProfile = profiles?.find((p: any) => p.user_id === ur.user_id);
+        return {
+          id: ur.id,
+          user_id: ur.user_id,
+          role: ur.role,
+          first_name: userProfile?.first_name || '',
+          last_name: userProfile?.last_name || '',
+        };
+      });
       setUsers(mapped);
+      setDemandes((demandesData as Demande[]) || []);
     }
     setLoading(false);
   };
@@ -77,7 +107,7 @@ export default function Users() {
       return;
     }
 
-    // Use Supabase admin API via signUp (creates in auth.users)
+    // Creation de l'utilisateur dans Supabase Auth (users table)
     const { data, error } = await supabase.auth.signUp({
       email: addFormData.email,
       password: addFormData.password,
@@ -88,7 +118,7 @@ export default function Users() {
       return;
     }
 
-    // Create profile
+    // Creation du profil dans la table profiles
     await supabase.from('profiles').insert({
       id: crypto.randomUUID(),
       user_id: data.user.id,
@@ -134,6 +164,59 @@ export default function Users() {
     }
   };
 
+  const handleApproveDemande = async (d: Demande) => {
+    setLoading(true);
+    try {
+      console.log('[ADMIN] Appel de l\'Edge Function pour valider:', d.email);
+
+      // Appel de la Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('approve-demande', {
+        body: { demandeId: d.id }
+      });
+
+      if (error) {
+        // L'erreur peut être dans error.message ou dans le corps de la réponse
+        const errorMsg = error instanceof Error ? error.message : (error as any).message || 'Erreur inconnue';
+        throw new Error(errorMsg);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+
+      toast({ 
+        title: 'Validation réussie ! ✅', 
+        description: `Le compte de ${d.first_name} a été créé et activé.` 
+      });
+      
+      fetchUsers();
+    } catch (e: any) {
+      console.error('[ADMIN] Erreur lors de l\'approbation:', e);
+      toast({ 
+        title: 'Échec de validation ❌', 
+        description: e.message || 'Une erreur est survenue lors de la création du compte.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+   
+
+
+
+  const handleRejectDemande = async (d: Demande) => {
+    try {
+      const { error } = await supabase.from('demandes').update({ status: 'rejected' }).eq('id', d.id);
+      if (error) throw error;
+      toast({ title: 'Demande refusée', description: 'La demande a été rejetée.' });
+      fetchUsers();
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e.message || 'Impossible de refuser.', variant: 'destructive' });
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     const configs: Record<string, { label: string; className: string }> = {
       super_admin: { label: 'Super Admin', className: 'bg-purple-100 text-purple-800' },
@@ -159,6 +242,8 @@ export default function Users() {
     );
   }
 
+  const activeUsers = users;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -173,7 +258,21 @@ export default function Users() {
           </Button>
         </div>
 
-        <Card className="border-none shadow-md overflow-hidden rounded-xl">
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="mb-6 grid w-full max-w-sm grid-cols-2">
+            <TabsTrigger value="active">Comptes Actifs</TabsTrigger>
+            <TabsTrigger value="pending">
+              Demandes
+              {demandes.length > 0 && (
+                <span className="ml-2 bg-red-martial text-white text-xs px-2 py-0.5 rounded-full">
+                  {demandes.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active">
+            <Card className="border-none shadow-md overflow-hidden rounded-xl">
           <CardHeader className="bg-muted/30 border-b">
             <CardTitle className="flex items-center gap-2 text-navy">
               <UserCog className="h-5 w-5" />
@@ -186,10 +285,10 @@ export default function Users() {
                 <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Chargement des utilisateurs...</p>
               </div>
-            ) : users.length === 0 ? (
+            ) : activeUsers.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground italic">
                 <UserCog className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun utilisateur trouvé</p>
+                <p>Aucun utilisateur actif trouvé</p>
               </div>
             ) : (
               <div className="overflow-x-auto w-full">
@@ -202,7 +301,7 @@ export default function Users() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((userRole) => (
+                    {activeUsers.map((userRole) => (
                       <TableRow key={userRole.id} className="hover:bg-muted/30 transition-colors">
                         <TableCell className="font-semibold text-navy">
                           <div className="flex items-center gap-2">
@@ -256,6 +355,86 @@ export default function Users() {
             )}
           </CardContent>
         </Card>
+        </TabsContent>
+
+        <TabsContent value="pending">
+          <Card className="border-none shadow-md overflow-hidden rounded-xl">
+            <CardHeader className="bg-muted/30 border-b">
+              <CardTitle className="flex items-center gap-2 text-navy">
+                <UserPlus className="h-5 w-5" />
+                <span>Demandes d'inscription ({demandes.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 sm:p-6">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Chargement des demandes...</p>
+                </div>
+              ) : demandes.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground italic">
+                  <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucune demande en attente</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="whitespace-nowrap font-bold">Email</TableHead>
+                        <TableHead className="whitespace-nowrap font-bold">Profil</TableHead>
+                        <TableHead className="text-right whitespace-nowrap font-bold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {demandes.map((d) => (
+                        <TableRow key={d.id} className="hover:bg-muted/30 transition-colors">
+                          <TableCell className="font-semibold text-navy">
+                            {d.email}
+                          </TableCell>
+                          <TableCell className="font-semibold text-navy">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-xs">
+                                {d.first_name?.[0] || d.last_name?.[0] || '?'}
+                              </div>
+                              <div className="flex flex-col leading-tight">
+                                <span>{d.first_name} {d.last_name}</span>
+                                <span className="text-xs font-normal text-muted-foreground text-amber-600">En attente</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1 sm:gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-lg text-green-600 border-green-200 hover:bg-green-50 font-bold"
+                                onClick={() => handleApproveDemande(d)}
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Valider</span>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-lg text-red-600 border-red-200 hover:bg-red-50 font-bold"
+                                onClick={() => handleRejectDemande(d)}
+                              >
+                                <XCircle className="h-4 w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Refuser</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        </Tabs>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
