@@ -87,7 +87,7 @@ export default function Auth() {
     } else {
       toast({ title: 'Mot de passe défini ✅', description: 'Bienvenue dans votre espace membre !' });
       setIsInvite(false);
-      navigate('/dashboard');
+      navigate('/dashboard/profile');
     }
   };
 

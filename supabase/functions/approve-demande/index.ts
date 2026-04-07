@@ -75,9 +75,9 @@ Deno.serve(async (req) => {
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       demande.email,
       {
-       redirectTo: 'http://localhost:5173/auth',
+       //redirectTo: 'http://localhost:5173/auth',
         // URL de production (doit être dans les Redirect URLs du Dashboard Supabase)
-        //redirectTo: 'https://vovinam-ugb-sc.netlify.app/auth',
+        redirectTo: 'https://vovinam-ugb-sc.netlify.app/auth',
         data: {
           first_name: demande.first_name,
           last_name: demande.last_name
