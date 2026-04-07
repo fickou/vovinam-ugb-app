@@ -71,18 +71,21 @@ Deno.serve(async (req) => {
     console.log(`[APPROVAL] Création du compte pour ${demande.email}...`)
 
     // 4. Création du compte Auth (CONFIRMÉ AUTOMATIQUEMENT)
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: demande.email,
-      password: demande.password_temp,
-      email_confirm: true,
-      user_metadata: { 
-        first_name: demande.first_name, 
-        last_name: demande.last_name 
+    // ✅ Par ceci
+    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      demande.email,
+      {
+       redirectTo: 'http://localhost:5173/auth',
+        // URL de production (doit être dans les Redirect URLs du Dashboard Supabase)
+        //redirectTo: 'https://vovinam-ugb-sc.netlify.app/auth',
+        data: {
+          first_name: demande.first_name,
+          last_name: demande.last_name
+        }
       }
-    })
-
+    )
     if (createError) throw createError
-    if (!newUser?.user) throw new Error('Échec de la création de l\'utilisateur Auth')
+    if (!newUser?.user) throw new Error('Échec de l\'invitation')
 
     const userId = newUser.user.id
 

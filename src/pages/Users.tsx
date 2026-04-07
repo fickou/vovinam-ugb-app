@@ -165,45 +165,51 @@ export default function Users() {
   };
 
   const handleApproveDemande = async (d: Demande) => {
-    setLoading(true);
-    try {
-      console.log('[ADMIN] Appel de l\'Edge Function pour valider:', d.email);
+  setLoading(true);
+  try {
+    console.log('[ADMIN] Appel de l\'Edge Function pour valider:', d.email);
 
-      // Appel de la Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('approve-demande', {
-        body: { demandeId: d.id }
-      });
+    // ✅ Récupère le token actif
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Session expirée, veuillez vous reconnecter.');
 
-      if (error) {
-        // L'erreur peut être dans error.message ou dans le corps de la réponse
-        const errorMsg = error instanceof Error ? error.message : (error as any).message || 'Erreur inconnue';
-        throw new Error(errorMsg);
+    const { data, error } = await supabase.functions.invoke('approve-demande', {
+      body: { demandeId: d.id },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`, // ✅ ligne ajoutée
       }
+    });
 
-      if (data?.error) {
-        throw new Error(data.error);
+    if (error) {
+      // Extraire le message précis du corps de la réponse HTTP de l'Edge Function
+      try {
+        const errorBody = await (error as any).context?.json();
+        throw new Error(errorBody?.error || error.message || 'Erreur de la fonction');
+      } catch (parseErr: any) {
+        if (parseErr.message && parseErr.message !== 'Erreur de la fonction') throw parseErr;
+        throw new Error(error.message || 'Erreur inconnue');
       }
-
-
-      toast({ 
-        title: 'Validation réussie ! ✅', 
-        description: `Le compte de ${d.first_name} a été créé et activé.` 
-      });
-      
-      fetchUsers();
-    } catch (e: any) {
-      console.error('[ADMIN] Erreur lors de l\'approbation:', e);
-      toast({ 
-        title: 'Échec de validation ❌', 
-        description: e.message || 'Une erreur est survenue lors de la création du compte.', 
-        variant: 'destructive' 
-      });
-    } finally {
-      setLoading(false);
     }
-  };
-   
 
+    if (data?.error) throw new Error(data.error);
+
+    toast({ 
+      title: 'Validation réussie ! ✅', 
+      description: `Le compte de ${d.first_name} a été créé et activé.` 
+    });
+    
+    fetchUsers();
+  } catch (e: any) {
+    console.error('[ADMIN] Erreur lors de l\'approbation:', e);
+    toast({ 
+      title: 'Échec de validation ❌', 
+      description: e.message || 'Une erreur est survenue lors de la création du compte.', 
+      variant: 'destructive' 
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   const handleRejectDemande = async (d: Demande) => {

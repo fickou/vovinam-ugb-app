@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invitation Vovinam UGB</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <div style="display:inline-block;background:linear-gradient(135deg,#1e3a5f,#0f172a);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 24px;">
+                <p style="margin:0;font-size:28px;font-weight:900;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">
+                  🥋 VOVINAM UGB
+                </p>
+                <p style="margin:4px 0 0;font-size:11px;color:#94a3b8;letter-spacing:3px;text-transform:uppercase;">
+                  Saint-Louis · Sénégal
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Card principale -->
+          <tr>
+            <td style="background-color:#1e293b;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+              
+              <!-- Bande rouge haut -->
+              <tr>
+                <td style="background:linear-gradient(90deg,#c0392b,#e74c3c);height:4px;display:block;"></td>
+              </tr>
+
+              <tr>
+                <td style="padding:40px 36px;">
+
+                  <!-- Icône centrale -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:24px;">
+                        <div style="width:64px;height:64px;background:linear-gradient(135deg,#c0392b,#8b1a1a);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:32px;">
+                          ✅
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Titre -->
+                  <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#f1f5f9;text-align:center;line-height:1.2;">
+                    Bienvenue dans la famille !
+                  </p>
+                  <p style="margin:0 0 28px;font-size:14px;color:#94a3b8;text-align:center;">
+                    Votre demande d'adhésion a été validée par l'administration du club.
+                  </p>
+
+                  <!-- Séparateur -->
+                  <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);margin-bottom:28px;"></div>
+
+                  <!-- Message -->
+                  <p style="margin:0 0 20px;font-size:15px;color:#cbd5e1;line-height:1.7;">
+                    Pour finaliser votre inscription et accéder à votre espace membre, cliquez sur le bouton ci-dessous. Vous serez invité à définir votre mot de passe.
+                  </p>
+
+                  <!-- Bouton CTA -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
+                    <tr>
+                      <td align="center">
+                        <a href="{{ .ConfirmationURL }}"
+                           style="display:inline-block;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;letter-spacing:0.5px;box-shadow:0 4px 24px rgba(192,57,43,0.4);">
+                          🔑 Accéder à mon espace membre
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Avertissement -->
+                  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 18px;margin-top:8px;">
+                    <p style="margin:0;font-size:12px;color:#64748b;line-height:1.6;">
+                      ⏱️ Ce lien est valable <strong style="color:#94a3b8;">24 heures</strong>. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+                    </p>
+                  </div>
+
+                  <!-- Lien de secours -->
+                  <p style="margin:20px 0 0;font-size:11px;color:#475569;text-align:center;line-height:1.7;">
+                    Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br/>
+                    <a href="{{ .ConfirmationURL }}" style="color:#6b8ec7;word-break:break-all;">{{ .ConfirmationURL }}</a>
+                  </p>
+
+                </td>
+              </tr>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:28px;">
+              <p style="margin:0;font-size:11px;color:#334155;text-align:center;line-height:1.8;">
+                © {{ now.Year }} <strong style="color:#475569;">Vovinam UGB</strong> · Saint-Louis, Sénégal<br/>
+                <span style="color:#1e293b;">━━━━━━━━</span><br/>
+                <em style="color:#334155;">Học cho hay, cày cho giỏi — Excellence &amp; Tradition</em>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
