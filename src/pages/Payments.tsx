@@ -151,13 +151,21 @@ export default function Payments() {
       return;
     }
 
+    // Validate monthly payment selection first
+    if (!selectedPayment && formData.payment_type === 'monthly') {
+      if (selectedMonths.length === 0) {
+        toast({ title: 'Erreur', description: 'Veuillez sélectionner au moins un mois', variant: 'destructive' });
+        return;
+      }
+    }
+
     // If Wave and new payment, show the Wave component
     if (!selectedPayment && formData.payment_method === 'wave') {
       setShowWavePayment(true);
       return;
     }
 
-    // Multi-month insert (only for new monthly payments)
+    // Multi-month insert (only for new non-wave monthly payments)
     if (!selectedPayment && formData.payment_type === 'monthly') {
       if (selectedMonths.length === 0) {
         toast({ title: 'Erreur', description: 'Veuillez sélectionner au moins un mois', variant: 'destructive' });
@@ -167,7 +175,7 @@ export default function Payments() {
         id: crypto.randomUUID(),
         member_id: formData.member_id,
         season_id: formData.season_id,
-        amount: parseInt(formData.amount),
+        amount: Math.round(parseInt(formData.amount) / selectedMonths.length),
         payment_type: 'monthly',
         payment_method: formData.payment_method,
         payment_date: formData.payment_date,
@@ -330,6 +338,7 @@ export default function Payments() {
                       seasonId={formData.season_id}
                       paymentType={formData.payment_type}
                       monthNumber={formData.month_number}
+                      selectedMonths={selectedMonths}
                       onSuccess={() => { setIsDialogOpen(false); resetForm(); fetchAll(); toast({ title: 'Succès', description: 'Paiement Wave enregistré' }); }}
                       onCancel={() => setShowWavePayment(false)}
                     />
@@ -428,14 +437,27 @@ export default function Payments() {
                         </div>
                       )}
                       {formData.payment_type === 'monthly' && selectedPayment && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label>Montant (FCFA)</Label>
-                            <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" />
+                            <Label>Mois</Label>
+                            <Select value={formData.month_number} onValueChange={(v) => setFormData({ ...formData, month_number: v })}>
+                              <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner un mois" /></SelectTrigger>
+                              <SelectContent>
+                                {monthNames.map((name, i) => (
+                                  <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <div className="space-y-2">
-                            <Label>Date</Label>
-                            <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Montant (FCFA)</Label>
+                              <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="rounded-lg" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Date</Label>
+                              <Input type="date" value={formData.payment_date} onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })} required className="rounded-lg" />
+                            </div>
                           </div>
                         </div>
                       )}

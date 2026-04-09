@@ -14,6 +14,7 @@ interface WavePaymentProps {
     seasonId: string;
     paymentType: string;
     monthNumber?: string;
+    selectedMonths?: number[];
     onSuccess: () => void;
     onCancel: () => void;
 }
@@ -24,6 +25,7 @@ export default function WavePayment({
     seasonId,
     paymentType,
     monthNumber,
+    selectedMonths,
     onSuccess,
     onCancel,
 }: WavePaymentProps) {
@@ -61,18 +63,36 @@ export default function WavePayment({
             const { data: { publicUrl } } = supabase.storage.from('proofs').getPublicUrl(uploadData.path);
 
             // 3. Record the payment as PENDING
-            const { error: paymentError } = await supabase.from('payments').insert({
+            const basePayment = {
                 member_id: memberId,
                 season_id: seasonId,
-                amount,
                 payment_type: paymentType,
                 payment_method: 'wave',
                 payment_date: new Date().toISOString().split('T')[0],
-                month_number: monthNumber ? Number(monthNumber) : null,
                 proof_url: publicUrl,
                 status: 'PENDING',
                 notes: 'Paiement Wave en attente de validation',
-            });
+            };
+
+            let paymentError;
+
+            if (paymentType === 'monthly' && selectedMonths && selectedMonths.length > 0) {
+                const perMonthAmount = Math.round(amount / selectedMonths.length);
+                const rows = selectedMonths.map(m => ({
+                    ...basePayment,
+                    amount: perMonthAmount,
+                    month_number: m,
+                }));
+                const { error } = await supabase.from('payments').insert(rows);
+                paymentError = error;
+            } else {
+                const { error } = await supabase.from('payments').insert({
+                    ...basePayment,
+                    amount,
+                    month_number: monthNumber ? Number(monthNumber) : null,
+                });
+                paymentError = error;
+            }
 
             if (paymentError) throw paymentError;
 

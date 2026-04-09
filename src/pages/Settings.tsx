@@ -24,6 +24,7 @@ import { Settings as SettingsIcon, Users, Shield, Zap, Save, Trash2, Plus } from
 
 interface Member {
   id: string;
+  user_id?: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -65,7 +66,9 @@ export default function Settings() {
   // Index members by ID for O(1) lookup
   const membersMap = useMemo(() => {
     const map = new Map<string, Member>();
-    members.forEach(m => map.set(m.id, m));
+    members.forEach(m => {
+      if (m.user_id) map.set(m.user_id, m);
+    });
     return map;
   }, [members]);
 
@@ -79,7 +82,7 @@ export default function Settings() {
     setLoading(true);
     try {
       const [membersRes, rolesRes] = await Promise.all([
-        supabase.from('members').select('id, first_name, last_name, email').order('last_name'),
+        supabase.from('members').select('id, user_id, first_name, last_name, email').not('user_id', 'is', null).order('last_name'),
         supabase.from('user_roles').select('*').order('created_at', { ascending: false }),
       ]);
 
@@ -387,7 +390,7 @@ export default function Settings() {
                       <SelectTrigger className="h-10 sm:h-11"><SelectValue placeholder="Sélectionner un utilisateur" /></SelectTrigger>
                       <SelectContent>
                         {members.map(m => (
-                          <SelectItem key={m.id} value={m.id}>
+                          <SelectItem key={m.user_id} value={m.user_id!}>
                             {m.first_name} {m.last_name}
                           </SelectItem>
                         ))}
@@ -496,7 +499,7 @@ export default function Settings() {
                 ) : (
                   <div className="space-y-2 max-h-[500px] overflow-y-auto">
                     {members.map((member) => {
-                      const memberRoles = userRoles.filter(r => r.user_id === member.id);
+                      const memberRoles = userRoles.filter(r => r.user_id === member.user_id);
                       return (
                         <div
                           key={member.id}
