@@ -35,7 +35,10 @@ export default function HeroSection() {
             {/* === Layered background === */}
             {data.backgroundImageUrl ? (
                 <div className="absolute inset-0">
-                    <img src={data.backgroundImageUrl} alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <div 
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+                        style={{ backgroundImage: `url(${data.backgroundImageUrl})` }}
+                    />
                     <div className="absolute inset-0 bg-[#0f172a]/70 mix-blend-multiply" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f172a]" />
                 </div>

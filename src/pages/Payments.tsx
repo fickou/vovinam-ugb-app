@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useTableResponsive } from '@/hooks/useTableResponsive';
@@ -21,9 +21,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, CreditCard, Pencil, Trash2, ExternalLink, Check, Clock } from 'lucide-react';
+import { Plus, CreditCard, Pencil, Trash2, ExternalLink, Check, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import WavePayment from '@/components/WavePayment';
+import { paymentSchema, RateLimiter, getFirstZodError } from '@/lib/validators';
 
 interface Season {
   id: string;
@@ -83,6 +84,9 @@ export default function Payments() {
     status: 'VALIDATED',
   });
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+
+  // Rate limiter : 3 secondes minimum entre deux soumissions
+  const rateLimiter = useRef(new RateLimiter(3000));
 
   useEffect(() => {
     fetchAll();
@@ -146,8 +150,42 @@ export default function Payments() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // ── Rate limiting : bloquer les soumissions trop rapides
+    if (!rateLimiter.current.canProceed()) {
+      const remaining = Math.ceil(rateLimiter.current.getRemainingMs() / 1000);
+      toast({
+        title: 'Trop rapide',
+        description: `Veuillez attendre ${remaining}s avant de réessayer.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!formData.member_id || !formData.season_id || !formData.amount) {
       toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires', variant: 'destructive' });
+      return;
+    }
+
+    // ── Validation Zod du montant
+    const amountNum = parseInt(formData.amount);
+    const amountValidation = paymentSchema.shape.amount.safeParse(amountNum);
+    if (!amountValidation.success) {
+      toast({
+        title: 'Montant invalide',
+        description: getFirstZodError(amountValidation.error),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // ── Validation date
+    const dateValidation = paymentSchema.shape.payment_date.safeParse(formData.payment_date);
+    if (!dateValidation.success) {
+      toast({
+        title: 'Date invalide',
+        description: getFirstZodError(dateValidation.error),
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -165,17 +203,41 @@ export default function Payments() {
       return;
     }
 
-    // Multi-month insert (only for new non-wave monthly payments)
+    // ── Multi-month insert (only for new non-wave monthly payments)
     if (!selectedPayment && formData.payment_type === 'monthly') {
       if (selectedMonths.length === 0) {
         toast({ title: 'Erreur', description: 'Veuillez sélectionner au moins un mois', variant: 'destructive' });
         return;
       }
+
+      // ── Anti-fraude : vérifier les doublons avant insertion
+      const { data: existingPayments } = await supabase
+        .from('payments')
+        .select('month_number')
+        .eq('member_id', formData.member_id)
+        .eq('season_id', formData.season_id)
+        .eq('payment_type', 'monthly')
+        .in('month_number', selectedMonths)
+        .neq('status', 'rejected');
+
+      if (existingPayments && existingPayments.length > 0) {
+        const duplicateMonths = existingPayments
+          .map(p => monthNames[(p.month_number ?? 1) - 1])
+          .join(', ');
+        toast({
+          title: '⚠️ Paiement déjà existant',
+          description: `Un paiement existe déjà pour : ${duplicateMonths}. Veuillez décocher ces mois.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const perMonthAmount = Math.round(amountNum / selectedMonths.length);
       const rows = selectedMonths.map(m => ({
         id: crypto.randomUUID(),
         member_id: formData.member_id,
         season_id: formData.season_id,
-        amount: Math.round(parseInt(formData.amount) / selectedMonths.length),
+        amount: perMonthAmount,
         payment_type: 'monthly',
         payment_method: formData.payment_method,
         payment_date: formData.payment_date,
@@ -186,10 +248,17 @@ export default function Payments() {
       }));
       const { error } = await supabase.from('payments').insert(rows);
       if (error) {
-        toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+        const isDuplicate = error.message.includes('duplicate') || error.message.includes('unique');
+        toast({
+          title: isDuplicate ? '⚠️ Doublon détecté' : 'Erreur',
+          description: isDuplicate
+            ? 'Un paiement pour ce mois existe déjà dans la base de données.'
+            : error.message,
+          variant: 'destructive',
+        });
         return;
       }
-      toast({ title: 'Succès', description: `${selectedMonths.length} paiement(s) enregistré(s)` });
+      toast({ title: '✅ Succès', description: `${selectedMonths.length} paiement(s) enregistré(s)` });
       setIsDialogOpen(false);
       resetForm();
       fetchAll();
@@ -199,7 +268,7 @@ export default function Payments() {
     const payload = {
       member_id: formData.member_id,
       season_id: formData.season_id,
-      amount: parseInt(formData.amount),
+      amount: amountNum,
       payment_type: formData.payment_type,
       payment_method: formData.payment_method,
       payment_date: formData.payment_date,
@@ -215,15 +284,21 @@ export default function Payments() {
         toast({ title: 'Erreur', description: `Impossible de modifier le paiement: ${error.message}`, variant: 'destructive' });
         return;
       }
-      toast({ title: 'Succès', description: 'Paiement modifié' });
+      toast({ title: '✅ Succès', description: 'Paiement modifié' });
     } else {
       const { error } = await supabase.from('payments').insert({ ...payload, id: crypto.randomUUID(), recorded_by: user?.id });
       if (error) {
-        console.error('Erreur insert payment:', error);
-        toast({ title: 'Erreur', description: `Impossible d'ajouter le paiement: ${error.message}`, variant: 'destructive' });
+        const isDuplicate = error.message.includes('duplicate') || error.message.includes('unique');
+        toast({
+          title: isDuplicate ? '⚠️ Doublon détecté' : 'Erreur',
+          description: isDuplicate
+            ? 'Ce paiement existe déjà pour ce membre et cette période.'
+            : `Impossible d'ajouter le paiement: ${error.message}`,
+          variant: 'destructive',
+        });
         return;
       }
-      toast({ title: 'Succès', description: 'Paiement enregistré' });
+      toast({ title: '✅ Succès', description: 'Paiement enregistré' });
     }
 
     setIsDialogOpen(false);

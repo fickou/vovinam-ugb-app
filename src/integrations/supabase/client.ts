@@ -13,5 +13,33 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',           // Plus sécurisé que implicite
+  },
+  global: {
+    headers: {
+      'x-application-name': 'vovinam-ugb',
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+});
+
+// ── Intercepteur Auth Global
+// Déconnecte proprement l'utilisateur si le token JWT expire et ne peut pas être rafraîchi
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'TOKEN_REFRESHED') {
+    // Silencieux — le token a été rafraîchi automatiquement
+    console.debug('[AUTH] Token rafraîchi avec succès');
+  }
+
+  if (event === 'SIGNED_OUT') {
+    // Vider les données locales
+    localStorage.removeItem('supabase.auth.token');
+    // Redirection uniquement si sur page protégée
+    if (window.location.pathname.startsWith('/dashboard')) {
+      window.location.href = '/auth';
+    }
   }
 });
