@@ -21,6 +21,7 @@ const signupSchema = z.object({
   password: z.string().min(6, 'Mot de passe minimum 6 caractères'),
   firstName: z.string().min(2, 'Prénom requis'),
   lastName: z.string().min(2, 'Nom requis'),
+  telephone: z.string().optional(),
 });
 
 export default function Auth() {
@@ -36,6 +37,7 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [telephone, setTelephone] = useState('');
 
   const { signIn, signUp, user, isStaff } = useAuth();
   const navigate = useNavigate();
@@ -64,7 +66,7 @@ export default function Auth() {
       if (isStaff) {
         navigate('/dashboard');
       } else {
-        navigate('/dashboard/profile');
+        navigate('/dashboard/member');
       }
     }
   }, [user, navigate, isStaff, isInvite]);
@@ -87,7 +89,7 @@ export default function Auth() {
     } else {
       toast({ title: 'Mot de passe défini ✅', description: 'Bienvenue dans votre espace membre !' });
       setIsInvite(false);
-      navigate('/dashboard/profile');
+      navigate('/dashboard/member');
     }
   };
 
@@ -134,6 +136,7 @@ export default function Auth() {
       password: signupPassword,
       firstName,
       lastName,
+      telephone,
     });
 
     if (!result.success) {
@@ -146,13 +149,13 @@ export default function Auth() {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, firstName, lastName);
+    const { error } = await signUp(signupEmail, signupPassword, firstName, lastName, telephone);
     setIsLoading(false);
 
     if (error) {
       let message = 'Erreur lors de l\'inscription';
-      if (error.message.includes('already exists') || error.message.includes('Duplicate entry')) {
-        message = 'Cet email est déjà utilisé';
+      if (error.message.includes('already exists') || error.message.includes('duplicate') || error.message.includes('unique') || error.message.includes('Duplicate entry')) {
+        message = 'Cet email est déjà utilisé. Une demande existe déjà pour cette adresse.';
       }
       toast({
         title: 'Erreur',
@@ -161,7 +164,7 @@ export default function Auth() {
       });
     } else {
       toast({
-        title: 'Demande envoyée',
+        title: 'Demande envoyée ✅',
         description: 'Votre demande d\'inscription est en attente de validation par l\'administrateur.',
       });
     }
@@ -283,6 +286,7 @@ export default function Auth() {
               setSignupPassword('');
               setFirstName('');
               setLastName('');
+              setTelephone('');
             }}
           >
             <TabsList className="grid w-full grid-cols-2 mb-4 h-10">
@@ -379,6 +383,19 @@ export default function Auth() {
                     className="h-10 sm:h-11 text-sm"
                     disabled={isLoading}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-telephone" className="text-xs sm:text-sm">Téléphone</Label>
+                  <Input
+                    id="signup-telephone"
+                    type="tel"
+                    placeholder="77 000 00 00"
+                    value={telephone}
+                    onChange={(e) => setTelephone(e.target.value)}
+                    className="h-10 sm:h-11 text-sm"
+                    disabled={isLoading}
                   />
                 </div>
 

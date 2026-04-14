@@ -11,7 +11,7 @@ interface AuthContextType {
   loading: boolean;
   isStaff: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, telephone?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   profile: any | null;
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, telephone?: string) => {
     setLoading(true);
     try {
       console.log('[AUTH] Tentative de création de demande pour:', email);
@@ -104,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           first_name: firstName,
           last_name: lastName,
           password_temp: password,
+          telephone: telephone || null,
           status: 'pending'
         } as any);
 

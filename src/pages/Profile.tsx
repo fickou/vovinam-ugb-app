@@ -76,13 +76,14 @@ export default function Profile() {
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user?.id}-${Math.random()}.${fileExt}`;
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      // Le chemin doit être : <user_id>/<filename> pour correspondre aux policies RLS
+      const filePath = `${user?.id}/${Date.now()}.${fileExt}`;
 
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
       if (uploadError) {
         throw uploadError;

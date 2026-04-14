@@ -16,6 +16,7 @@ import {
   Wallet,
   IdCard,
   FileText,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -174,7 +175,36 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <div className="flex-1 min-w-0" />
 
-            {/* Optional: Add additional header items here */}
+            {/* Mon espace link */}
+            <NavLink
+              to="/dashboard/member"
+              title="Mon espace"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 sm:px-4 h-9 rounded-xl text-sm font-semibold transition-all ${
+                  isActive
+                    ? 'bg-navy text-white shadow-md shadow-navy/20'
+                    : 'hover:bg-navy/10 text-navy border border-navy/20 hover:border-navy/40'
+                }`
+              }
+            >
+              <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Mon espace</span>
+            </NavLink>
+
+            {/* Profile icon */}
+            <NavLink
+              to="/dashboard/profile"
+              title="Mon profil"
+              className={({ isActive }) =>
+                `h-9 w-9 flex items-center justify-center rounded-full transition-colors ${
+                  isActive
+                    ? 'bg-navy text-white'
+                    : 'hover:bg-navy/10 text-navy'
+                }`
+              }
+            >
+              <User className="h-5 w-5" />
+            </NavLink>
           </header>
 
           {/* Main Content */}

@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import AdminPublicSite from "./pages/AdminPublicSite";
 import Profile from "./pages/Profile";
+import MemberDashboard from "./pages/MemberDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/dashboard/profile" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/member" element={
+              <ProtectedRoute>
+                <MemberDashboard />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/members" element={
