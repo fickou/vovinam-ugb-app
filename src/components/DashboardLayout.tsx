@@ -17,6 +17,7 @@ import {
   IdCard,
   FileText,
   User,
+  Scale,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +46,7 @@ const mainMenuItems = [
   { title: 'Paiements', url: '/dashboard/payments', icon: CreditCard },
   { title: 'Cotisations', url: '/dashboard/cotisations', icon: FileText },
   { title: 'Dépenses', url: '/dashboard/expenses', icon: Wallet },
+  { title: 'Bilan Financier', url: '/dashboard/bilan', icon: Scale },
   { title: 'Le Bureau', url: '/dashboard/board', icon: Shield },
   { title: 'Rappels', url: '/dashboard/reminders', icon: Bell },
   { title: 'Carte', url: '/dashboard/card', icon: IdCard },

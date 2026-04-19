@@ -17,6 +17,7 @@ interface ReportData {
   registrationPayments: number;
   monthlyPayments: number;
   otherPayments: number;
+  otherIncomes: number;
   totalExpenses: number;
   netBalance: number;
   paymentsByMethod: Record<string, number>;
@@ -28,6 +29,7 @@ export default function Reports() {
   const [reportData, setReportData] = useState<ReportData>({
     totalMembers: 0, activeMembers: 0, totalPayments: 0,
     registrationPayments: 0, monthlyPayments: 0, otherPayments: 0,
+    otherIncomes: 0,
     totalExpenses: 0, netBalance: 0, paymentsByMethod: {},
   });
   const [loading, setLoading] = useState(true);
@@ -59,11 +61,15 @@ export default function Reports() {
       const payments = paymentsQuery.data || [];
       const expenses = expensesQuery.data || [];
 
-      const totalPayments = payments.reduce((s, p) => s + p.amount, 0);
       const registrationPayments = payments.filter(p => p.payment_type === 'registration').reduce((s, p) => s + p.amount, 0);
       const monthlyPayments = payments.filter(p => p.payment_type === 'monthly').reduce((s, p) => s + p.amount, 0);
       const otherPayments = payments.filter(p => !['registration', 'monthly'].includes(p.payment_type)).reduce((s, p) => s + p.amount, 0);
-      const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+      
+      const realExpenses = expenses.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0);
+      const otherIncomes = expenses.filter(e => e.amount < 0).reduce((s, e) => s + Math.abs(e.amount), 0);
+
+      const totalPayments = payments.reduce((s, p) => s + p.amount, 0) + otherIncomes;
+      const totalExpenses = realExpenses;
 
       const paymentsByMethod: Record<string, number> = {};
       payments.forEach(p => {
@@ -77,6 +83,7 @@ export default function Reports() {
         registrationPayments,
         monthlyPayments,
         otherPayments,
+        otherIncomes,
         totalExpenses,
         netBalance: totalPayments - totalExpenses,
         paymentsByMethod,
@@ -242,13 +249,14 @@ export default function Reports() {
                 <CardContent className="p-0 sm:p-6">
                   <div className="space-y-1 p-4 sm:p-0">
                     {[
+                      { label: "Somme initiale", value: reportData.otherIncomes, color: 'text-green-600' },
                       { label: "Frais d'inscription", value: reportData.registrationPayments, color: 'text-blue-700' },
                       { label: 'Mensualités', value: reportData.monthlyPayments, color: 'text-red-martial' },
-                      { label: 'Autres paiements', value: reportData.otherPayments, color: 'text-slate-700' },
+                      { label: 'Autres paiements (membres)', value: reportData.otherPayments, color: 'text-slate-700' },
                     ].map(item => (
-                      <div key={item.label} className="flex justify-between items-center py-3 border-b border-dashed">
+                      <div key={item.label} className={`flex justify-between items-center py-3 border-b border-dashed ${item.value === 0 && item.label === 'Somme initiale' ? 'hidden' : ''}`}>
                         <span className="text-sm font-medium text-muted-foreground">{item.label}</span>
-                        <span className={`font-mono font-bold ${item.color}`}>{item.value.toLocaleString()} F</span>
+                        <span className={`font-mono font-bold ${item.color}`}>{item.value > 0 && item.label === 'Somme initiale' ? '+' : ''}{item.value.toLocaleString()} F</span>
                       </div>
                     ))}
                     <div className="flex justify-between items-center py-3 border-b border-dashed bg-red-50/30 px-2 -mx-2 rounded-lg my-1">

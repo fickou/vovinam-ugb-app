@@ -53,6 +53,7 @@ export default function Expenses() {
         description: '',
         category: 'Divers',
         expense_date: new Date().toISOString().split('T')[0],
+        operation_type: 'expense'
     });
     const { toast } = useToast();
     const { user } = useAuth();
@@ -84,6 +85,7 @@ export default function Expenses() {
             description: '',
             category: 'Divers',
             expense_date: new Date().toISOString().split('T')[0],
+            operation_type: 'expense'
         });
         setSelectedExpense(null);
     };
@@ -92,19 +94,21 @@ export default function Expenses() {
         setSelectedExpense(expense);
         setFormData({
             season_id: expense.season_id,
-            amount: String(expense.amount),
+            amount: String(Math.abs(expense.amount)),
             description: expense.description,
             category: expense.category,
             expense_date: expense.expense_date,
+            operation_type: expense.amount < 0 ? 'income' : 'expense'
         });
         setIsDialogOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const rawAmount = Math.abs(parseInt(formData.amount));
         const payload = {
             season_id: formData.season_id,
-            amount: parseInt(formData.amount),
+            amount: formData.operation_type === 'income' ? -rawAmount : rawAmount,
             description: formData.description,
             category: formData.category,
             expense_date: formData.expense_date,
@@ -143,7 +147,8 @@ export default function Expenses() {
         exp.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const totalAmount = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const totalExpenses = filteredExpenses.filter(e => e.amount > 0).reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const totalIncomes = filteredExpenses.filter(e => e.amount < 0).reduce((sum, exp) => sum + Math.abs(Number(exp.amount)), 0);
 
     const isMobileView = useTableResponsive();
 
@@ -152,15 +157,15 @@ export default function Expenses() {
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-display font-bold text-navy">Gestion des Dépenses</h1>
-                        <p className="text-muted-foreground">Suivez toutes les sorties d'argent du club</p>
+                        <h1 className="text-3xl font-display font-bold text-navy">Opérations de Trésorerie</h1>
+                        <p className="text-muted-foreground">Dépenses et recettes diverses</p>
                     </div>
                     <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="w-full sm:w-auto bg-navy hover:bg-navy-light h-12 rounded-xl">
-                        <Plus className="h-5 w-5 mr-2" />Nouvelle dépense
+                        <Plus className="h-5 w-5 mr-2" />Nouvelle opération
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-white border-red-100 shadow-sm overflow-hidden">
                         <div className="p-4 sm:p-6">
                             <div className="flex items-center justify-between mb-2">
@@ -172,7 +177,25 @@ export default function Expenses() {
                             ) : (
                                 <div className="flex flex-col">
                                     <div className="text-2xl sm:text-3xl font-bold text-red-600 truncate">
-                                        {totalAmount.toLocaleString('fr-FR')} FCFA
+                                        {totalExpenses.toLocaleString('fr-FR')} FCFA
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">Sur la base des filtres actuels</p>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                    <Card className="bg-white border-green-100 shadow-sm overflow-hidden">
+                        <div className="p-4 sm:p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <Label className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Recettes Div. / Reports</Label>
+                                <Wallet className="h-5 w-5 text-green-500" />
+                            </div>
+                            {loading ? (
+                                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+                            ) : (
+                                <div className="flex flex-col">
+                                    <div className="text-2xl sm:text-3xl font-bold text-green-600 truncate">
+                                        {totalIncomes.toLocaleString('fr-FR')} FCFA
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">Sur la base des filtres actuels</p>
                                 </div>
@@ -215,7 +238,9 @@ export default function Expenses() {
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold text-red-600 text-sm">-{expense.amount.toLocaleString()} F</p>
+                                                <p className={`font-bold text-sm ${expense.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {expense.amount < 0 ? '+' : '-'}{Math.abs(expense.amount).toLocaleString()} F
+                                                </p>
                                             </div>
                                         </div>
 
@@ -279,7 +304,9 @@ export default function Expenses() {
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="whitespace-nowrap">{expense.seasons?.name || '-'}</TableCell>
-                                                <TableCell className="text-right font-bold text-red-600 whitespace-nowrap">-{expense.amount.toLocaleString()} F</TableCell>
+                                                <TableCell className={`text-right font-bold whitespace-nowrap ${expense.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {expense.amount < 0 ? '+' : '-'}{Math.abs(expense.amount).toLocaleString()} F
+                                                </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-1 md:gap-2">
                                                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(expense)} className="h-8 w-8 hover:bg-navy/10 hover:text-navy transition-colors">
@@ -303,7 +330,7 @@ export default function Expenses() {
                     <DialogContent className="max-w-md w-[95vw] rounded-xl overflow-hidden p-0">
                         <div className="p-6">
                             <DialogHeader className="mb-4">
-                                <DialogTitle>{selectedExpense ? 'Modifier la dépense' : 'Ajouter une dépense'}</DialogTitle>
+                                <DialogTitle>{selectedExpense ? 'Modifier l\'opération' : 'Ajouter une opération'}</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
                                 <div className="space-y-2">
@@ -328,16 +355,36 @@ export default function Expenses() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="category">Catégorie</Label>
+                                    <Label>Type d'opération</Label>
+                                    <Select value={formData.operation_type} onValueChange={(v) => setFormData({ ...formData, operation_type: v, category: v === 'income' ? 'Recette Bureau sortant' : 'Divers' })}>
+                                        <SelectTrigger className="rounded-lg border-2 border-navy/10 font-medium"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="expense" className="text-red-700 font-medium">Dépense (Sortie d'argent)</SelectItem>
+                                            <SelectItem value="income" className="text-green-700 font-medium">Recette (Entrée d'argent)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Catégorie comptable</Label>
                                     <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                                         <SelectTrigger className="rounded-lg"><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Matériel">Matériel</SelectItem>
-                                            <SelectItem value="Loyer">Loyer / Salle</SelectItem>
-                                            <SelectItem value="Événement">Événement</SelectItem>
-                                            <SelectItem value="Transport">Transport</SelectItem>
-                                            <SelectItem value="Communication">Communication</SelectItem>
-                                            <SelectItem value="Divers">Divers</SelectItem>
+                                            {formData.operation_type === 'income' ? (
+                                                <>
+                                                    <SelectItem value="Recette Bureau sortant">Bureau sortant</SelectItem>
+                                                    <SelectItem value="Don / Subvention">Don / Subvention extérieure</SelectItem>
+                                                    <SelectItem value="Autre recette">Autre recette diverse</SelectItem>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <SelectItem value="Matériel">Matériel</SelectItem>
+                                                    <SelectItem value="Loyer">Loyer / Salle</SelectItem>
+                                                    <SelectItem value="Événement">Événement</SelectItem>
+                                                    <SelectItem value="Transport">Transport</SelectItem>
+                                                    <SelectItem value="Communication">Communication</SelectItem>
+                                                    <SelectItem value="Divers">Divers</SelectItem>
+                                                </>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>

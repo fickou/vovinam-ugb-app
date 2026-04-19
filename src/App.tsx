@@ -26,6 +26,7 @@ const Reminders      = lazy(() => import("./pages/Reminders"));
 const Expenses       = lazy(() => import("./pages/Expenses"));
 const CardGenerator  = lazy(() => import("./pages/CardGenerator"));
 const Cotisations    = lazy(() => import("./pages/Cotisations"));
+const FinancialBalance= lazy(() => import("./pages/FinancialBalance"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const AdminPublicSite = lazy(() => import("./pages/AdminPublicSite"));
 
@@ -97,6 +98,9 @@ const App = () => (
               } />
               <Route path="/dashboard/expenses" element={
                 <ProtectedRoute requireStaff><Expenses /></ProtectedRoute>
+              } />
+              <Route path="/dashboard/bilan" element={
+                <ProtectedRoute requireStaff><FinancialBalance /></ProtectedRoute>
               } />
               <Route path="/dashboard/board" element={
                 <ProtectedRoute requireStaff><BoardMembers /></ProtectedRoute>
