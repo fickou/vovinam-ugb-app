@@ -1,414 +1,163 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+/**
+ * @file src/pages/Expenses.tsx
+ * Orchestrateur de la page Opérations de Trésorerie.
+ *
+ * Avant refactoring : 415 lignes (state + fetch + form + table + dialogs mélangés).
+ * Après  refactoring :  ~80 lignes (orchestration pure).
+ */
+import { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { useTableResponsive } from '@/hooks/useTableResponsive';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
-import {
-    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, Wallet, Search, Pencil, Trash2 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Plus } from 'lucide-react';
 
-interface Expense {
-    id: string;
-    season_id: string;
-    amount: number;
-    description: string;
-    category: string;
-    expense_date: string;
-    seasons: { name: string } | null;
+import { useExpenses }              from '@/hooks/useExpenses';
+import { useSeasons }               from '@/hooks/useSeasons';
+import { useTableResponsive }       from '@/hooks/useTableResponsive';
+import { todayISO }                 from '@/lib/utils';
+import { PageHeader }               from '@/components/shared/PageHeader';
+import { SearchInput }              from '@/components/shared/SearchInput';
+import { DeleteDialog }             from '@/components/shared/DeleteDialog';
+import { ExpenseSummaryCards }      from '@/components/expenses/ExpenseSummaryCards';
+import { ExpenseTable }             from '@/components/expenses/ExpenseTable';
+import { ExpenseFormDialog }        from '@/components/expenses/ExpenseFormDialog';
+import type { Expense, ExpenseFormData } from '@/types';
+
+// ─── État formulaire par défaut ───────────────────────────────────────────────
+
+function buildDefaultForm(activeSeasonId = ''): ExpenseFormData {
+  return {
+    season_id:      activeSeasonId,
+    amount:         '',
+    description:    '',
+    category:       'Divers',
+    expense_date:   todayISO(),
+    operation_type: 'expense',
+  };
 }
 
-interface Season {
-    id: string;
-    name: string;
-    is_active: boolean;
-}
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Expenses() {
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-    const [seasons, setSeasons] = useState<Season[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
-    const [formData, setFormData] = useState({
-        season_id: '',
-        amount: '',
-        description: '',
-        category: 'Divers',
-        expense_date: new Date().toISOString().split('T')[0],
-        operation_type: 'expense'
+  const { expenses, loading, isMutating, create, update, remove } = useExpenses();
+  const { seasons } = useSeasons();
+
+  const [searchTerm,        setSearchTerm]        = useState('');
+  const [isFormOpen,        setIsFormOpen]        = useState(false);
+  const [isDeleteOpen,      setIsDeleteOpen]      = useState(false);
+  const [selectedExpense,   setSelectedExpense]   = useState<Expense | null>(null);
+  const [formData,          setFormData]          = useState<ExpenseFormData>(buildDefaultForm);
+
+  const isMobileView = useTableResponsive();
+
+  // ── Filtrage ────────────────────────────────────────────────────────────────
+  const filtered = useMemo(() =>
+    expenses.filter((e) =>
+      e.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.category.toLowerCase().includes(searchTerm.toLowerCase()),
+    ), [expenses, searchTerm]);
+
+  const totalExpenses = useMemo(() => filtered.filter((e) => e.amount > 0).reduce((s, e) => s + e.amount, 0), [filtered]);
+  const totalIncomes  = useMemo(() => filtered.filter((e) => e.amount < 0).reduce((s, e) => s + Math.abs(e.amount), 0), [filtered]);
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
+  const openCreate = () => {
+    const active = seasons.find((s) => s.is_active);
+    setFormData(buildDefaultForm(active?.id));
+    setSelectedExpense(null);
+    setIsFormOpen(true);
+  };
+
+  const openEdit = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setFormData({
+      season_id:      expense.season_id,
+      amount:         String(Math.abs(expense.amount)),
+      description:    expense.description,
+      category:       expense.category,
+      expense_date:   expense.expense_date,
+      operation_type: expense.amount < 0 ? 'income' : 'expense',
     });
-    const { toast } = useToast();
-    const { user } = useAuth();
+    setIsFormOpen(true);
+  };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+  const openDelete = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsDeleteOpen(true);
+  };
 
-    const fetchData = async () => {
-        setLoading(true);
-        const [expensesRes, seasonsRes] = await Promise.all([
-            supabase.from('expenses').select('*, seasons(name)').order('expense_date', { ascending: false }),
-            supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-        ]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedExpense) {
+      update(selectedExpense.id, formData);
+    } else {
+      create(formData);
+    }
+    setIsFormOpen(false);
+  };
 
-        setExpenses((expensesRes.data as Expense[]) || []);
-        const seasonsData = seasonsRes.data || [];
-        setSeasons(seasonsData);
-        const active = seasonsData.find(s => s.is_active);
-        if (active) setFormData(prev => ({ ...prev, season_id: active.id }));
-        setLoading(false);
-    };
+  const handleDelete = () => {
+    if (selectedExpense) remove(selectedExpense.id);
+    setIsDeleteOpen(false);
+    setSelectedExpense(null);
+  };
 
-    const resetForm = () => {
-        const active = seasons.find(s => s.is_active);
-        setFormData({
-            season_id: active?.id || '',
-            amount: '',
-            description: '',
-            category: 'Divers',
-            expense_date: new Date().toISOString().split('T')[0],
-            operation_type: 'expense'
-        });
-        setSelectedExpense(null);
-    };
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title="Opérations de Trésorerie"
+          subtitle="Dépenses et recettes diverses"
+          actions={
+            <Button onClick={openCreate} className="w-full sm:w-auto bg-navy hover:bg-navy-light h-12 rounded-xl">
+              <Plus className="h-5 w-5 mr-2" />Nouvelle opération
+            </Button>
+          }
+        />
 
-    const openEditDialog = (expense: Expense) => {
-        setSelectedExpense(expense);
-        setFormData({
-            season_id: expense.season_id,
-            amount: String(Math.abs(expense.amount)),
-            description: expense.description,
-            category: expense.category,
-            expense_date: expense.expense_date,
-            operation_type: expense.amount < 0 ? 'income' : 'expense'
-        });
-        setIsDialogOpen(true);
-    };
+        <ExpenseSummaryCards
+          totalExpenses={totalExpenses}
+          totalIncomes={totalIncomes}
+          loading={loading}
+        />
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const rawAmount = Math.abs(parseInt(formData.amount));
-        const payload = {
-            season_id: formData.season_id,
-            amount: formData.operation_type === 'income' ? -rawAmount : rawAmount,
-            description: formData.description,
-            category: formData.category,
-            expense_date: formData.expense_date,
-            recorded_by: user?.id || null,
-        };
+        <Card className="overflow-hidden border-none shadow-md">
+          <CardHeader className="pb-4">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Rechercher une opération…"
+            />
+          </CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            <ExpenseTable
+              expenses={filtered}
+              loading={loading}
+              isMobileView={isMobileView}
+              onEdit={openEdit}
+              onDelete={openDelete}
+            />
+          </CardContent>
+        </Card>
 
-        if (selectedExpense) {
-            const { error } = await supabase.from('expenses').update(payload).eq('id', selectedExpense.id);
-            if (error) { console.error('Erreur update expense:', error); toast({ title: 'Erreur', description: `Impossible de modifier la dépense: ${error.message}`, variant: 'destructive' }); return; }
-            toast({ title: 'Succès', description: 'Dépense modifiée avec succès' });
-        } else {
-            const { error } = await supabase.from('expenses').insert({ ...payload, id: crypto.randomUUID() });
-            if (error) { console.error('Erreur insert expense:', error); toast({ title: 'Erreur', description: `Impossible d'ajouter la dépense: ${error.message}`, variant: 'destructive' }); return; }
-            toast({ title: 'Succès', description: 'Dépense ajoutée avec succès' });
-        }
-        setIsDialogOpen(false);
-        resetForm();
-        fetchData();
-    };
+        <ExpenseFormDialog
+          open={isFormOpen}
+          onOpenChange={(o) => { setIsFormOpen(o); if (!o) setSelectedExpense(null); }}
+          formData={formData}
+          onFormChange={setFormData}
+          onSubmit={handleSubmit}
+          selectedExpense={selectedExpense}
+          seasons={seasons}
+          isMutating={isMutating}
+        />
 
-    const handleDelete = async () => {
-        if (!selectedExpense) return;
-        const { error } = await supabase.from('expenses').delete().eq('id', selectedExpense.id);
-        if (error) {
-            console.error('Erreur delete expense:', error);
-            toast({ title: 'Erreur', description: `Impossible de supprimer la dépense: ${error.message}`, variant: 'destructive' });
-        } else {
-            toast({ title: 'Succès', description: 'Dépense supprimée' });
-            setIsDeleteDialogOpen(false);
-            fetchData();
-        }
-    };
-
-    const filteredExpenses = expenses.filter(exp =>
-        exp.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        exp.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const totalExpenses = filteredExpenses.filter(e => e.amount > 0).reduce((sum, exp) => sum + Number(exp.amount), 0);
-    const totalIncomes = filteredExpenses.filter(e => e.amount < 0).reduce((sum, exp) => sum + Math.abs(Number(exp.amount)), 0);
-
-    const isMobileView = useTableResponsive();
-
-    return (
-        <DashboardLayout>
-            <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-display font-bold text-navy">Opérations de Trésorerie</h1>
-                        <p className="text-muted-foreground">Dépenses et recettes diverses</p>
-                    </div>
-                    <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="w-full sm:w-auto bg-navy hover:bg-navy-light h-12 rounded-xl">
-                        <Plus className="h-5 w-5 mr-2" />Nouvelle opération
-                    </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-white border-red-100 shadow-sm overflow-hidden">
-                        <div className="p-4 sm:p-6">
-                            <div className="flex items-center justify-between mb-2">
-                                <Label className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Dépenses</Label>
-                                <Wallet className="h-5 w-5 text-red-500" />
-                            </div>
-                            {loading ? (
-                                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-                            ) : (
-                                <div className="flex flex-col">
-                                    <div className="text-2xl sm:text-3xl font-bold text-red-600 truncate">
-                                        {totalExpenses.toLocaleString('fr-FR')} FCFA
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-1">Sur la base des filtres actuels</p>
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-                    <Card className="bg-white border-green-100 shadow-sm overflow-hidden">
-                        <div className="p-4 sm:p-6">
-                            <div className="flex items-center justify-between mb-2">
-                                <Label className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Recettes Div. / Reports</Label>
-                                <Wallet className="h-5 w-5 text-green-500" />
-                            </div>
-                            {loading ? (
-                                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-                            ) : (
-                                <div className="flex flex-col">
-                                    <div className="text-2xl sm:text-3xl font-bold text-green-600 truncate">
-                                        {totalIncomes.toLocaleString('fr-FR')} FCFA
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-1">Sur la base des filtres actuels</p>
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-                </div>
-
-                <Card className="overflow-hidden border-none shadow-md">
-                    <CardHeader className="pb-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Rechercher une dépense..." className="pl-10 rounded-lg h-11" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-0 sm:p-6">
-                        {loading ? (
-                            <div className="text-center py-12">
-                                <div className="animate-spin h-8 w-8 border-4 border-navy border-t-transparent rounded-full mx-auto mb-4"></div>
-                                <p className="text-muted-foreground">Chargement des dépenses...</p>
-                            </div>
-                        ) : filteredExpenses.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground">
-                                <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p>Aucune dépense trouvée</p>
-                            </div>
-                        ) : isMobileView ? (
-                            // MOBILE VIEW - CARD VIEW
-                            <div className="space-y-3 px-3 py-4">
-                                {filteredExpenses.map((expense) => (
-                                    <Card key={expense.id} className="p-4 border border-gray-200">
-                                        {/* Header with description and amount */}
-                                        <div className="flex justify-between items-start mb-3 pb-3 border-b">
-                                            <div className="flex-1 pr-2">
-                                                <p className="font-semibold text-navy text-sm line-clamp-2">
-                                                    {expense.description}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {new Date(expense.expense_date).toLocaleDateString('fr-FR')}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className={`font-bold text-sm ${expense.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {expense.amount < 0 ? '+' : '-'}{Math.abs(expense.amount).toLocaleString()} F
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Details grid */}
-                                        <div className="grid grid-cols-2 gap-3 text-xs mb-4">
-                                            <div>
-                                                <span className="text-muted-foreground">Catégorie:</span>
-                                                <p className="font-medium text-gray-900">{expense.category}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Saison:</span>
-                                                <p className="font-medium text-gray-900">{expense.seasons?.name || '-'}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="flex gap-2 pt-3 border-t">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => openEditDialog(expense)}
-                                                className="flex-1 h-8 text-xs"
-                                            >
-                                                <Pencil className="h-3 w-3 mr-1" />
-                                                Modifier
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => { setSelectedExpense(expense); setIsDeleteDialogOpen(true); }}
-                                                className="text-destructive h-8 px-3 text-xs hover:bg-destructive/10"
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </Button>
-                                        </div>
-                                    </Card>
-                                ))}
-                            </div>
-                        ) : (
-                            // DESKTOP VIEW - TABLE VIEW
-                            <div className="overflow-x-auto w-full">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-muted/50">
-                                            <TableHead className="whitespace-nowrap font-bold">Date</TableHead>
-                                            <TableHead className="whitespace-nowrap font-bold">Description</TableHead>
-                                            <TableHead className="whitespace-nowrap font-bold">Catégorie</TableHead>
-                                            <TableHead className="whitespace-nowrap font-bold">Saison</TableHead>
-                                            <TableHead className="text-right whitespace-nowrap font-bold">Montant</TableHead>
-                                            <TableHead className="text-right whitespace-nowrap font-bold">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredExpenses.map((expense) => (
-                                            <TableRow key={expense.id} className="hover:bg-muted/30 transition-colors">
-                                                <TableCell className="whitespace-nowrap text-muted-foreground font-mono text-xs">{new Date(expense.expense_date).toLocaleDateString('fr-FR')}</TableCell>
-                                                <TableCell className="font-medium min-w-[200px]">{expense.description}</TableCell>
-                                                <TableCell className="whitespace-nowrap">
-                                                    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
-                                                        {expense.category}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="whitespace-nowrap">{expense.seasons?.name || '-'}</TableCell>
-                                                <TableCell className={`text-right font-bold whitespace-nowrap ${expense.amount < 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {expense.amount < 0 ? '+' : '-'}{Math.abs(expense.amount).toLocaleString()} F
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-1 md:gap-2">
-                                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(expense)} className="h-8 w-8 hover:bg-navy/10 hover:text-navy transition-colors">
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => { setSelectedExpense(expense); setIsDeleteDialogOpen(true); }} className="text-destructive h-8 w-8 hover:bg-destructive/10 transition-colors">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-                    <DialogContent className="max-w-md w-[95vw] rounded-xl overflow-hidden p-0">
-                        <div className="p-6">
-                            <DialogHeader className="mb-4">
-                                <DialogTitle>{selectedExpense ? 'Modifier l\'opération' : 'Ajouter une opération'}</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-                                <div className="space-y-2">
-                                    <Label htmlFor="season_id">Saison</Label>
-                                    <Select value={formData.season_id} onValueChange={(v) => setFormData({ ...formData, season_id: v })}>
-                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Choisir une saison" /></SelectTrigger>
-                                        <SelectContent>{seasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Input id="description" required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Ex: Achat de matériel, Loyer salle..." className="rounded-lg" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="amount">Montant (FCFA)</Label>
-                                        <Input id="amount" type="number" required value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="rounded-lg" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="expense_date">Date</Label>
-                                        <Input id="expense_date" type="date" required value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} className="rounded-lg" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Type d'opération</Label>
-                                    <Select value={formData.operation_type} onValueChange={(v) => setFormData({ ...formData, operation_type: v, category: v === 'income' ? 'Recette Bureau sortant' : 'Divers' })}>
-                                        <SelectTrigger className="rounded-lg border-2 border-navy/10 font-medium"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="expense" className="text-red-700 font-medium">Dépense (Sortie d'argent)</SelectItem>
-                                            <SelectItem value="income" className="text-green-700 font-medium">Recette (Entrée d'argent)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="category">Catégorie comptable</Label>
-                                    <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                                        <SelectTrigger className="rounded-lg"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {formData.operation_type === 'income' ? (
-                                                <>
-                                                    <SelectItem value="Recette Bureau sortant">Bureau sortant</SelectItem>
-                                                    <SelectItem value="Don / Subvention">Don / Subvention extérieure</SelectItem>
-                                                    <SelectItem value="Autre recette">Autre recette diverse</SelectItem>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <SelectItem value="Matériel">Matériel</SelectItem>
-                                                    <SelectItem value="Loyer">Loyer / Salle</SelectItem>
-                                                    <SelectItem value="Événement">Événement</SelectItem>
-                                                    <SelectItem value="Transport">Transport</SelectItem>
-                                                    <SelectItem value="Communication">Communication</SelectItem>
-                                                    <SelectItem value="Divers">Divers</SelectItem>
-                                                </>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button type="submit" className="w-full bg-navy hover:bg-navy-light text-white py-6 text-lg rounded-xl mt-2">
-                                    {selectedExpense ? 'Modifier' : 'Ajouter'}
-                                </Button>
-                            </form>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                    <AlertDialogContent className="rounded-xl">
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                            <AlertDialogDescription>Êtes-vous sûr de vouloir supprimer cette dépense ? Cette action est irréversible.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel className="rounded-lg">Annuler</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 text-white rounded-lg">Supprimer</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </div>
-        </DashboardLayout>
-    );
+        <DeleteDialog
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
+          onConfirm={handleDelete}
+          description="Êtes-vous sûr de vouloir supprimer cette opération ? Cette action est irréversible."
+        />
+      </div>
+    </DashboardLayout>
+  );
 }
