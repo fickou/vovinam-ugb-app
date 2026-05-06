@@ -149,8 +149,8 @@ switch ($method) {
                 $typesToLog[] = ['type' => 'monthly', 'month_number' => $m];
             }
         } elseif ($type === 'welcome') {
-            $msg = SMS_SENDER_ID . ": Bonjour {$member['first_name']}, 👋 Bienvenue au VOVINAM VIET VO DAO UGB SPORTING CLUB ! 🥋 Nous sommes heureux de vous accueillir au sein du club. 💰 Frais au 75 557 55 51 : Inscription: {$season['registration_fee']}F, Mensualite: {$season['monthly_fee']}F. 🕒 Horaires d’entraînement : Lundi, Mercredi, Vendredi de 18h-20h. Le Bureau
-VOVINAM VIET VO DAO UGB SPORTING CLUB
+            $msg = SMS_SENDER_ID . ": Bonjour {$member['first_name']}, 👋 Bienvenue au VOVINAM VIET VO DAO UGB  CLUB ! 🥋 Nous sommes heureux de vous accueillir au sein du club. 💰 Frais au 75 557 55 51 : Inscription: {$season['registration_fee']}F, Mensualite: {$season['monthly_fee']}F. 🕒 Horaires d’entraînement : Lundi, Mercredi, Vendredi de 18h-20h. Le Bureau
+VOVINAM VIET VO DAO UGB  CLUB
 ";
             $typesToLog[] = ['type' => 'welcome', 'month_number' => null];
         }

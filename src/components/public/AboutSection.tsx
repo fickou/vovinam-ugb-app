@@ -6,7 +6,7 @@ import { AboutContent } from '@/types/cms';
 const fallbackAbout: AboutContent = {
     label: 'Notre club',
     titleLine1: 'Vovinam UGB',
-    titleLine2: 'Sporting Club',
+    titleLine2: ' Club',
     description: 'Fondée au sein de l\'Université Gaston Berger de Saint-Louis du Sénégal, notre section porte la tradition millénaire du combat vietnamien dans un cadre académique d\'excellence. Nous formons des pratiquants complets : athlètes, étudiants et citoyens.',
     imageCaptionTitle: 'Université Gaston Berger',
     imageCaptionSub: 'Saint-Louis · Sénégal',

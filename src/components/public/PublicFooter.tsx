@@ -30,7 +30,7 @@ export default function PublicFooter() {
                             <div className="font-display font-black text-white uppercase tracking-wide text-sm">
                                 Vovinam <span className="text-[#c0392b]">UGB</span> <span className="text-[#e5a800]">SC</span>
                             </div>
-                            <div className="text-white/30 text-[10px] uppercase tracking-widest">Sporting Club · Vovinam VVD</div>
+                            <div className="text-white/30 text-[10px] uppercase tracking-widest"> Club · Vovinam VVD</div>
                         </div>
                     </div>
                     <p className="text-white/40 text-sm leading-relaxed mb-5 max-w-xs">
@@ -74,7 +74,7 @@ export default function PublicFooter() {
             {/* Bottom bar */}
             <div className="border-t border-white/5 py-6">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-white/25 text-xs">
-                    <span>© {year} Vovinam Viet Vo Dao UGB Sporting Club · Tous droits réservés · Saint-Louis, Sénégal</span>
+                    <span>© {year} Vovinam Viet Vo Dao UGB  Club · Tous droits réservés · Saint-Louis, Sénégal</span>
                     <div className="flex items-center gap-3">
                         <div className="h-1 w-1 rounded-full bg-[#c0392b]" />
                         <span>Art Martial Vietnamien · Fondé 1938</span>

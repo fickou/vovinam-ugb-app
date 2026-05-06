@@ -85,7 +85,7 @@ const PaymentPoster = () => {
             {/* Introduction Text */}
             <div className="mb-4 px-2">
               <p className="font-body text-foreground text-sm sm:text-base leading-relaxed text-justify">
-                Le <span className="font-semibold">VOVINAM VIET VO DAO UGB SPORTING CLUB</span> informe l'ensemble de ses pratiquants que, pour la saison sportive 2024 / 2025, les frais étaient fixés comme suit :
+                Le <span className="font-semibold">VOVINAM VIET VO DAO UGB  CLUB</span> informe l'ensemble de ses pratiquants que, pour la saison sportive 2024 / 2025, les frais étaient fixés comme suit :
               </p>
             </div>
 
@@ -189,7 +189,7 @@ const PaymentPoster = () => {
                 </span>
               </div>
               <p className="font-display font-bold text-center text-navy text-xs sm:text-sm uppercase tracking-wider">
-                VOVINAM VIET VO DAO UGB SPORTING CLUB
+                VOVINAM VIET VO DAO UGB  CLUB
               </p>
             </div>
 

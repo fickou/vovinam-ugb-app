@@ -195,7 +195,7 @@ export default function Reminders() {
         }
 
         const detailsStr = details.join(' et ');
-        const message = `VOVINAM UGB SPORTING CLUB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non reglees. Wave au 75 557 55 51.`;
+        const message = `VOVINAM UGB  CLUB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non reglees. Wave au 75 557 55 51.`;
 
         const whatsappUrl = `https://wa.me/${phoneStr}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');

@@ -52,7 +52,7 @@ export default function Settings() {
   const { user, isAdmin } = useAuth();
 
   const [clubSettings, setClubSettings] = useState<ClubSettings>({
-    club_name: 'Vovinam UGB Sporting Club',
+    club_name: 'Vovinam UGB  Club',
     club_email: '',
     club_phone: '',
     club_address: '',
@@ -323,7 +323,7 @@ export default function Settings() {
                     value={clubSettings.club_name}
                     onChange={(e) => setClubSettings({ ...clubSettings, club_name: e.target.value })}
                     className="h-10 sm:h-11"
-                    placeholder="Vovinam UGB Sporting Club"
+                    placeholder="Vovinam UGB  Club"
                   />
                 </div>
 

@@ -65,6 +65,7 @@ const PANEL_TITLES: Record<CardType, string> = {
   reglement: 'Règlement Intérieur du Club',
   principes: '10 Principes du Pratiquant',
   programme: 'Programme de la saison',
+  passage:   'Passage de Grade',
 };
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -75,11 +76,17 @@ interface CardFormPanelProps {
   clubLogo: string;
   vovinamLogoImg: string;
   memberPhoto: string;
+  passageBg: string;
+  passageBeltImg: string;
+  passageMasterImg: string;
   exporting: boolean;
-  onUpdate: (key: keyof CardFormData, value: string) => void;
+  onUpdate: (key: keyof CardFormData, value: any) => void;
   onClubLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onVovinamLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onMemberPhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPassageBgChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPassageBeltChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPassageMasterChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExportPNG: () => void;
   onExportPDF: () => void;
 }
@@ -90,11 +97,17 @@ export function CardFormPanel({
   clubLogo,
   vovinamLogoImg,
   memberPhoto,
+  passageBg,
+  passageBeltImg,
+  passageMasterImg,
   exporting,
   onUpdate,
   onClubLogoChange,
   onVovinamLogoChange,
   onMemberPhotoChange,
+  onPassageBgChange,
+  onPassageBeltChange,
+  onPassageMasterChange,
   onExportPNG,
   onExportPDF,
 }: CardFormPanelProps) {
@@ -105,22 +118,28 @@ export function CardFormPanel({
       </CardHeader>
       <CardContent className="p-6 space-y-5">
 
-        {/* Logos */}
-        <div className="grid grid-cols-2 gap-4">
-          <ImageUpload label="Logo du Club"   value={clubLogo}      alt="Club"    onChange={onClubLogoChange} />
-          <ImageUpload label="Logo Vovinam"   value={vovinamLogoImg} alt="Vovinam" onChange={onVovinamLogoChange} />
-        </div>
+        {/* Logos — masqués sur l'onglet passage car l'upload est dans sa propre section */}
+        {cardType !== 'passage' && (
+          <div className="grid grid-cols-2 gap-4">
+            <ImageUpload label="Logo du Club"   value={clubLogo}      alt="Club"    onChange={onClubLogoChange} />
+            <ImageUpload label="Logo Vovinam"   value={vovinamLogoImg} alt="Vovinam" onChange={onVovinamLogoChange} />
+          </div>
+        )}
 
         {/* Champs communs */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="La Ligue"    value={form.ligue}    onChange={(v) => onUpdate('ligue', v)} />
           <Field label="Nom du Club" value={form.clubName} onChange={(v) => onUpdate('clubName', v)} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Prénom" value={form.firstName} onChange={(v) => onUpdate('firstName', v)} />
-          <Field label="Nom"    value={form.lastName}  onChange={(v) => onUpdate('lastName', v)} />
-        </div>
-        <Field label="Téléphone" value={form.phone} onChange={(v) => onUpdate('phone', v)} />
+        {cardType !== 'passage' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Prénom" value={form.firstName} onChange={(v) => onUpdate('firstName', v)} />
+            <Field label="Nom"    value={form.lastName}  onChange={(v) => onUpdate('lastName', v)} />
+          </div>
+        )}
+        {cardType !== 'passage' && (
+          <Field label="Téléphone" value={form.phone} onChange={(v) => onUpdate('phone', v)} />
+        )}
 
         {/* Photo membre — accès uniquement */}
         {cardType === 'access' && (
@@ -139,16 +158,21 @@ export function CardFormPanel({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Saison"   value={form.season}  onChange={(v) => onUpdate('season', v)} />
-          <Field label="Site Web" value={form.website} onChange={(v) => onUpdate('website', v)} />
-        </div>
-        <Field label="Email" value={form.email} onChange={(v) => onUpdate('email', v)} />
+        {/* Saison + Site Web + Email — masqués pour passage (non utilisés dans ce template) */}
+        {cardType !== 'passage' && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Saison"   value={form.season}  onChange={(v) => onUpdate('season', v)} />
+              <Field label="Site Web" value={form.website} onChange={(v) => onUpdate('website', v)} />
+            </div>
+            <Field label="Email" value={form.email} onChange={(v) => onUpdate('email', v)} />
+          </>
+        )}
 
         {/* Champs rappel paiement */}
         {cardType === 'reminder' && (
           <div className="space-y-4 pt-2 border-t border-navy/10 mt-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Montant Inscription (FCFA)" value={form.inscriptionAmount} onChange={(v) => onUpdate('inscriptionAmount', v)} className="text-red-martial" />
               <Field label="Montant Mensualité (FCFA)"  value={form.mensualiteAmount}  onChange={(v) => onUpdate('mensualiteAmount', v)}  className="text-red-martial" />
             </div>
@@ -159,11 +183,11 @@ export function CardFormPanel({
         {/* Champs élections / renouvellement */}
         {cardType === 'renewal' && (
           <div className="space-y-4 pt-2 border-t border-navy/10 mt-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Titre Principal" value={form.renewalTitle}    onChange={(v) => onUpdate('renewalTitle', v)} />
               <Field label="Sous-titre"      value={form.renewalSubtitle} onChange={(v) => onUpdate('renewalSubtitle', v)} />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Field label="Date" value={form.renewalDate}     onChange={(v) => onUpdate('renewalDate', v)} />
               <Field label="Heure" value={form.renewalTime}    onChange={(v) => onUpdate('renewalTime', v)} />
               <Field label="Lieu"  value={form.renewalLocation} onChange={(v) => onUpdate('renewalLocation', v)} />
@@ -268,8 +292,84 @@ export function CardFormPanel({
             </div>
           </div>
         )}
+        {/* ── Champs Passage de Grade ── */}
+        {cardType === 'passage' && (
+          <div className="space-y-4 pt-2 border-t border-navy/10 mt-2">
 
-        {/* Boutons export */}
+            {/* Logos (affichés ici car masqués dans la section commune pour cet onglet) */}
+            <div className="grid grid-cols-2 gap-4">
+              <ImageUpload label="Logo du Club"  value={clubLogo}       alt="Club"    onChange={onClubLogoChange} />
+              <ImageUpload label="Logo Vovinam"  value={vovinamLogoImg} alt="Vovinam" onChange={onVovinamLogoChange} />
+            </div>
+
+            {/* Images propres à l'affiche Passage */}
+            <div className="grid grid-cols-3 gap-3">
+              <ImageUpload label="Photo Fond"    value={passageBg}        alt="Fond"     onChange={onPassageBgChange} />
+              <ImageUpload label="Ceinture"      value={passageBeltImg}   alt="Ceinture" onChange={onPassageBeltChange} />
+              <ImageUpload label="Photo Maître"  value={passageMasterImg} alt="Maître"   onChange={onPassageMasterChange} />
+            </div>
+
+            {/* Organisateur */}
+            <Field
+              label="Organisateur"
+              value={form.passageOrganizer}
+              onChange={(v) => onUpdate('passageOrganizer', v)}
+              placeholder="UNION SENEGALAISE DE VOVINAM VIET VO DAO (USV)"
+            />
+
+
+            {/* Titre + Grades */}
+            <Field
+              label="Titre de l'Affiche"
+              value={form.passageTitle}
+              onChange={(v) => onUpdate('passageTitle', v)}
+              placeholder="PASSAGE DE GRADE"
+            />
+            <Field
+              label="Grades / Ceintures"
+              value={form.passageGrades}
+              onChange={(v) => onUpdate('passageGrades', v)}
+              placeholder="CEINTURE JAUNE – 1er DANG – 2e DANG – 3e DANG"
+            />
+
+            {/* Date, Lieu, Heure */}
+            <Field
+              label="Date"
+              value={form.passageDate}
+              onChange={(v) => onUpdate('passageDate', v)}
+              placeholder="SAMEDI 17 JANVIER 2026"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field
+                label="Lieu"
+                value={form.passageLocation}
+                onChange={(v) => onUpdate('passageLocation', v)}
+                placeholder="UGB"
+              />
+              <Field
+                label="Heure"
+                value={form.passageTime}
+                onChange={(v) => onUpdate('passageTime', v)}
+                placeholder="08H00"
+              />
+            </div>
+
+            {/* Contacts */}
+            <Field
+              label="Téléphone(s) de Contact"
+              value={form.passagePhone}
+              onChange={(v) => onUpdate('passagePhone', v)}
+              placeholder="+221 77 000 00 00 / 77 000 00 01"
+            />
+            <Field
+              label="Email de Contact"
+              value={form.passageEmail}
+              onChange={(v) => onUpdate('passageEmail', v)}
+              placeholder="vovinam.ugb.sc@gmail.com"
+            />
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button onClick={onExportPNG} disabled={exporting} className="flex-1 bg-navy hover:bg-navy-light h-12 rounded-xl text-base gap-2 shadow-lg shadow-navy/20">
             {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileImage className="h-5 w-5" />}

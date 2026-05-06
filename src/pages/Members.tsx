@@ -103,7 +103,7 @@ export default function Members() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <PrintHeader title="Vovinam UGB Sporting Club" subtitle="Liste des Pratiquants" />
+        <PrintHeader title="Vovinam UGB  Club" subtitle="Liste des Pratiquants" />
 
         <PageHeader
           title="Pratiquants"

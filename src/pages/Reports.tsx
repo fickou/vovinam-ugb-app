@@ -119,7 +119,7 @@ export default function Reports() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <PrintHeader title="Vovinam UGB Sporting Club" subtitle="RAPPORT D'ACTIVITÉ FINANCIÈRE" seasonLabel={`Saison : ${seasonLabel}`} />
+        <PrintHeader title="Vovinam UGB  Club" subtitle="RAPPORT D'ACTIVITÉ FINANCIÈRE" seasonLabel={`Saison : ${seasonLabel}`} />
 
         <PageHeader
           title="Rapports & Statistiques"

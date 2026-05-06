@@ -65,7 +65,7 @@ export default function FinancialBalance() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <PrintHeader title="Vovinam UGB Sporting Club" subtitle="BILAN FINANCIER DÉTAILLÉ" seasonLabel={`Saison : ${seasonLabel}`} />
+        <PrintHeader title="Vovinam UGB  Club" subtitle="BILAN FINANCIER DÉTAILLÉ" seasonLabel={`Saison : ${seasonLabel}`} />
 
         <PageHeader
           title="Bilan Financier"

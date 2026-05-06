@@ -10,7 +10,7 @@ import { Loader2, Image as ImageIcon, Trash2, Plus, GripVertical } from 'lucide-
 const defaultAbout: AboutContent = {
     label: 'Notre club',
     titleLine1: 'Vovinam UGB',
-    titleLine2: 'Sporting Club',
+    titleLine2: ' Club',
     description: 'Fondée au sein de l\'Université Gaston Berger de Saint-Louis du Sénégal, notre section porte la tradition millénaire du combat vietnamien dans un cadre académique d\'excellence. Nous formons des pratiquants complets : athlètes, étudiants et citoyens.',
     imageCaptionTitle: 'Université Gaston Berger',
     imageCaptionSub: 'Saint-Louis · Sénégal',
@@ -149,7 +149,7 @@ export default function AdminAboutTab() {
                                 <Input
                                     value={data.titleLine2}
                                     onChange={e => setData({ ...data, titleLine2: e.target.value })}
-                                    placeholder="ex: Sporting Club"
+                                    placeholder="ex:  Club"
                                 />
                             </div>
                         </div>

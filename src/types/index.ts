@@ -110,7 +110,7 @@ export interface ReportData {
 
 // ─── Cartes / Card Generator ─────────────────────────────────────────────────
 
-export type CardType = 'access' | 'reminder' | 'renewal' | 'reglement' | 'principes' | 'programme';
+export type CardType = 'access' | 'reminder' | 'renewal' | 'reglement' | 'principes' | 'programme' | 'passage';
 
 export interface CardFormData {
   ligue: string;
@@ -135,6 +135,15 @@ export interface CardFormData {
   renewalMessage: string;
   programTitle: string;
   programActivities: ProgramActivity[];
+  // ── Passage de Grade ──
+  passageOrganizer: string;
+  passageTitle: string;
+  passageGrades: string;
+  passageDate: string;
+  passageLocation: string;
+  passageTime: string;
+  passagePhone: string;
+  passageEmail: string;
 }
 
 export interface ProgramActivity {

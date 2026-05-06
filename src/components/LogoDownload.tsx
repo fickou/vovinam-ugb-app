@@ -47,7 +47,7 @@ const LogoDownload = () => {
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
     pdf.text('VOVINAM VIET VO DAO', pageWidth / 2, y + logoSize + 15, { align: 'center' });
-    pdf.text('UGB SPORTING CLUB', pageWidth / 2, y + logoSize + 25, { align: 'center' });
+    pdf.text('UGB  CLUB', pageWidth / 2, y + logoSize + 25, { align: 'center' });
     
     pdf.save('vovinam-ugb-logo.pdf');
   };

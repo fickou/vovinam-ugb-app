@@ -26,6 +26,7 @@ import { RenewalCardTemplate }  from '@/components/card-generator/templates/Rene
 import { ReglementCardTemplate } from '@/components/card-generator/templates/ReglementCardTemplate';
 import { PrincipesCardTemplate } from '@/components/card-generator/templates/PrincipesCardTemplate';
 import { ProgrammeCardTemplate } from '@/components/card-generator/templates/ProgrammeCardTemplate';
+import { PassageCardTemplate }  from '@/components/card-generator/templates/PassageCardTemplate';
 
 import vovinamLogo   from '@/assets/logo.png';
 import vovinam_Logo  from '@/assets/logo-vovinam.png';
@@ -35,7 +36,7 @@ import type { CardType, CardFormData } from '@/types';
 
 const DEFAULT_FORM: CardFormData = {
   ligue:            'SAINT-LOUIS',
-  clubName:         'VOVINAM UGB SPORTING CLUB',
+  clubName:         'VOVINAM UGB  CLUB',
   firstName:        'DAOUDA',
   lastName:         'FICKOU',
   phone:            '+221 78 282 96 73',
@@ -59,6 +60,15 @@ const DEFAULT_FORM: CardFormData = {
     { id: '1', name: 'Ouverture de saison', date: '07/12/2025', location: 'Pikine poste courant', time: '09h00' },
     { id: '2', name: 'Passage de grade régional(3cap)', date: '18/04/2026', location: 'UGB', time: '16h00' },
   ],
+  // ── Passage de Grade ──
+  passageOrganizer:    '',
+  passageTitle:        '',
+  passageGrades:       '',
+  passageDate:         '',
+  passageLocation:     '',
+  passageTime:         '',
+  passagePhone:        '',
+  passageEmail:        '',
 };
 
 // ─── Gestionnaire upload image ────────────────────────────────────────────────
@@ -83,6 +93,10 @@ export default function CardGenerator() {
   const [clubLogo, setClubLogo]         = useState<string>(vovinamLogo);
   const [vovinamLogoImg, setVovinamLogoImg] = useState<string>(vovinam_Logo);
   const [memberPhoto, setMemberPhoto]   = useState<string>('');
+  // Images spécifiques à l'onglet Passage (toutes vides par défaut)
+  const [passageBg, setPassageBg]           = useState<string>('');
+  const [passageBeltImg, setPassageBeltImg] = useState<string>('');
+  const [passageMasterImg, setPassageMasterImg] = useState<string>('');
 
   const { exporting, exportPNG, exportPDF } = useCardExport({
     cardRef,
@@ -96,6 +110,7 @@ export default function CardGenerator() {
 
   // Props partagées entre tous les templates
   const templateProps = { form, clubLogo, vovinamLogoImg, memberPhoto };
+  const passageTemplateProps = { form, clubLogo, vovinamLogoImg, passageBg, passageBeltImg, passageMasterImg };
 
   return (
     <DashboardLayout>
@@ -116,11 +131,17 @@ export default function CardGenerator() {
               clubLogo={clubLogo}
               vovinamLogoImg={vovinamLogoImg}
               memberPhoto={memberPhoto}
+              passageBg={passageBg}
+              passageBeltImg={passageBeltImg}
+              passageMasterImg={passageMasterImg}
               exporting={exporting}
               onUpdate={update}
               onClubLogoChange={(e) => readImageFile(e, setClubLogo)}
               onVovinamLogoChange={(e) => readImageFile(e, setVovinamLogoImg)}
               onMemberPhotoChange={(e) => readImageFile(e, setMemberPhoto)}
+              onPassageBgChange={(e) => readImageFile(e, setPassageBg)}
+              onPassageBeltChange={(e) => readImageFile(e, setPassageBeltImg)}
+              onPassageMasterChange={(e) => readImageFile(e, setPassageMasterImg)}
               onExportPNG={exportPNG}
               onExportPDF={exportPDF}
             />
@@ -151,6 +172,7 @@ export default function CardGenerator() {
                   <TabsContent value="reglement" className="mt-0"><ReglementCardTemplate {...templateProps} /></TabsContent>
                   <TabsContent value="principes" className="mt-0"><PrincipesCardTemplate {...templateProps} /></TabsContent>
                   <TabsContent value="programme" className="mt-0"><ProgrammeCardTemplate {...templateProps} /></TabsContent>
+                  <TabsContent value="passage"   className="mt-0"><PassageCardTemplate  {...passageTemplateProps} /></TabsContent>
                 </div>
               </div>
             </div>
