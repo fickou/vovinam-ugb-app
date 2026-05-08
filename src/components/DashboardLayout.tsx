@@ -18,6 +18,7 @@ import {
   FileText,
   User,
   Scale,
+  Award,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,17 +41,18 @@ interface DashboardLayoutProps {
 }
 
 const mainMenuItems = [
-  { title: 'Tableau de bord', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Pratiquants', url: '/dashboard/members', icon: Users },
-  { title: 'Saisons', url: '/dashboard/seasons', icon: Calendar },
-  { title: 'Paiements', url: '/dashboard/payments', icon: CreditCard },
-  { title: 'Cotisations', url: '/dashboard/cotisations', icon: FileText },
-  { title: 'Dépenses', url: '/dashboard/expenses', icon: Wallet },
-  { title: 'Bilan Financier', url: '/dashboard/bilan', icon: Scale },
-  { title: 'Le Bureau', url: '/dashboard/board', icon: Shield },
-  { title: 'Rappels', url: '/dashboard/reminders', icon: Bell },
-  { title: 'Carte', url: '/dashboard/card', icon: IdCard },
-  { title: 'Rapports', url: '/dashboard/reports', icon: BarChart3 },
+  { title: 'Tableau de bord', url: '/dashboard',            icon: LayoutDashboard },
+  { title: 'Pratiquants',     url: '/dashboard/members',    icon: Users },
+  { title: 'Saisons',         url: '/dashboard/seasons',    icon: Calendar },
+  { title: 'Paiements',       url: '/dashboard/payments',   icon: CreditCard },
+  { title: 'Cotisations',     url: '/dashboard/cotisations',icon: FileText },
+  { title: 'Dépenses',        url: '/dashboard/expenses',   icon: Wallet },
+  { title: 'Bilan Financier', url: '/dashboard/bilan',      icon: Scale },
+  { title: 'Le Bureau',       url: '/dashboard/board',      icon: Shield },
+  { title: 'Rappels',         url: '/dashboard/reminders',  icon: Bell },
+  { title: 'Carte',           url: '/dashboard/card',       icon: IdCard },
+  { title: 'Passage de Grade',url: '/dashboard/passage',    icon: Award },
+  { title: 'Rapports',        url: '/dashboard/reports',    icon: BarChart3 },
 ];
 
 import { Globe } from 'lucide-react';

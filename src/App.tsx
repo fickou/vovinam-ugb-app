@@ -29,6 +29,7 @@ const Cotisations    = lazy(() => import("./pages/Cotisations"));
 const FinancialBalance= lazy(() => import("./pages/FinancialBalance"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const AdminPublicSite = lazy(() => import("./pages/AdminPublicSite"));
+const PassageGrade   = lazy(() => import("./pages/PassageGrade"));
 
 // ── Spinner de chargement partagé
 function PageLoader() {
@@ -110,6 +111,9 @@ const App = () => (
               } />
               <Route path="/dashboard/card" element={
                 <ProtectedRoute requireStaff><CardGenerator /></ProtectedRoute>
+              } />
+              <Route path="/dashboard/passage" element={
+                <ProtectedRoute requireStaff><PassageGrade /></ProtectedRoute>
               } />
 
               {/* ── Admin (lazy) */}
