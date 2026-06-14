@@ -19,6 +19,7 @@ import {
   User,
   Scale,
   Award,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +53,7 @@ const mainMenuItems = [
   { title: 'Rappels',         url: '/dashboard/reminders',  icon: Bell },
   { title: 'Carte',           url: '/dashboard/card',       icon: IdCard },
   { title: 'Passage de Grade',url: '/dashboard/passage',    icon: Award },
+  { title: 'Commandes',       url: '/dashboard/commandes',  icon: ShoppingBag },
   { title: 'Rapports',        url: '/dashboard/reports',    icon: BarChart3 },
 ];
 

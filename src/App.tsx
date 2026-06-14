@@ -30,6 +30,8 @@ const FinancialBalance= lazy(() => import("./pages/FinancialBalance"));
 const Settings       = lazy(() => import("./pages/Settings"));
 const AdminPublicSite = lazy(() => import("./pages/AdminPublicSite"));
 const PassageGrade   = lazy(() => import("./pages/PassageGrade"));
+const Commandes      = lazy(() => import("./pages/Commandes"));
+const OrderForm      = lazy(() => import("./pages/OrderForm"));
 
 // ── Spinner de chargement partagé
 function PageLoader() {
@@ -115,6 +117,12 @@ const App = () => (
               <Route path="/dashboard/passage" element={
                 <ProtectedRoute requireStaff><PassageGrade /></ProtectedRoute>
               } />
+              <Route path="/dashboard/commandes" element={
+                <ProtectedRoute requireStaff><Commandes /></ProtectedRoute>
+              } />
+
+              {/* ── Formulaire public commandes (sans auth) */}
+              <Route path="/commande/:campaignId" element={<OrderForm />} />
 
               {/* ── Admin (lazy) */}
               <Route path="/dashboard/users" element={
