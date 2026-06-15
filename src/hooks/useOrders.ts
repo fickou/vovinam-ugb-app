@@ -12,7 +12,7 @@ async function fetchOrders(campaignId?: string): Promise<Order[]> {
   let query = (supabase as any)
     .from('orders')
     .select('*, campaign:order_campaigns(name, product_type, price)')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: true }); // Premier inscrit en premier
 
   if (campaignId) {
     query = query.eq('campaign_id', campaignId);
@@ -138,26 +138,14 @@ export function useSubmitOrder() {
 
 // ── Export CSV ────────────────────────────────────────────────────────────────
 export function exportOrdersCSV(orders: Order[], campaignName: string) {
-  const headers = [
-    'Nom',
-    'Prénom',
-    'Téléphone',
-    'Taille',
-    'Quantité',
-    'Payé',
-    'Date commande',
-    'Remarques',
-  ];
+  const headers = ['Prénom', 'Nom', 'Téléphone', 'Taille', 'Quantité'];
 
   const rows = orders.map((o) => [
-    o.last_name,
     o.first_name,
+    o.last_name,
     o.phone,
     o.size,
     o.quantity,
-    o.is_paid ? 'Oui' : 'Non',
-    new Date(o.created_at).toLocaleDateString('fr-FR'),
-    o.notes ?? '',
   ]);
 
   const csvContent =
