@@ -1,12 +1,12 @@
 /**
  * @file src/components/members/MemberTableDesktop.tsx
- * Affichage des membres sous forme de table (Desktop).
+ * Affichage des membres sous forme de table (Desktop) — avec colonne Tuteur.
  */
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Shield } from 'lucide-react';
 import { MemberStatusBadge } from './MemberStatusBadge';
 import type { Member } from '@/types';
 
@@ -27,6 +27,7 @@ export function MemberTableDesktop({ members, isAdmin, onEdit, onDelete }: Props
             <TableHead className="whitespace-nowrap font-bold">Nom</TableHead>
             <TableHead className="whitespace-nowrap font-bold">Téléphone</TableHead>
             <TableHead className="whitespace-nowrap font-bold">Email</TableHead>
+            <TableHead className="whitespace-nowrap font-bold">Tuteur</TableHead>
             <TableHead className="whitespace-nowrap font-bold">Statut</TableHead>
             {isAdmin && <TableHead className="text-right no-print font-bold">Actions</TableHead>}
           </TableRow>
@@ -38,6 +39,21 @@ export function MemberTableDesktop({ members, isAdmin, onEdit, onDelete }: Props
               <TableCell className="font-semibold text-slate-800 whitespace-nowrap">{member.first_name} {member.last_name}</TableCell>
               <TableCell className="whitespace-nowrap">{member.phone || '-'}</TableCell>
               <TableCell className="whitespace-nowrap max-w-[200px] truncate">{member.email || '-'}</TableCell>
+              <TableCell className="whitespace-nowrap">
+                {member.guardian_name ? (
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium text-amber-800 leading-none">{member.guardian_name}</p>
+                      {member.guardian_phone && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{member.guardian_phone}</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
+              </TableCell>
               <TableCell className="whitespace-nowrap"><MemberStatusBadge status={member.status} /></TableCell>
               {isAdmin && (
                 <TableCell className="text-right no-print">

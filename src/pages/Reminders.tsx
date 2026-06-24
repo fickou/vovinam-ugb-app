@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { Bell, CheckCircle2, AlertCircle, History, Clock, UserX, UserCheck, Trash2 } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle, History, Clock, UserX, UserCheck, Trash2, Shield, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -35,8 +35,17 @@ interface DelinquentMember {
     last_name: string;
     phone: string | null;
     member_number: string | null;
+    guardian_name: string | null;
+    guardian_phone: string | null;
     owes_registration: boolean;
     unpaid_months: number[];
+}
+
+// Groupe de tuteur : un tuteur avec plusieurs élèves en retard
+interface GuardianGroup {
+    guardian_name: string;
+    guardian_phone: string;
+    students: DelinquentMember[];
 }
 
 export default function Reminders() {
@@ -52,7 +61,6 @@ export default function Reminders() {
     const fetchAll = async () => {
         setLoading(true);
         try {
-            // Fetch reminder history
             const { data: historyData } = await supabase
                 .from('reminders')
                 .select('*, members(first_name, last_name), seasons(name)')
@@ -61,17 +69,12 @@ export default function Reminders() {
 
             setHistory((historyData as ReminderHistory[]) || []);
 
-            // Calculate delinquents from Supabase data
             const { data: activeSeason } = await supabase.from('seasons').select('*').eq('is_active', true).maybeSingle();
-            if (!activeSeason) {
-                setDelinquents([]);
-                setLoading(false);
-                return;
-            }
+            if (!activeSeason) { setDelinquents([]); setLoading(false); return; }
 
             const { data: members } = await supabase
                 .from('members')
-                .select('id, first_name, last_name, phone, member_number, created_at')
+                .select('id, first_name, last_name, phone, member_number, created_at, guardian_name, guardian_phone')
                 .eq('status', 'active');
 
             const { data: payments } = await supabase
@@ -80,10 +83,7 @@ export default function Reminders() {
                 .eq('season_id', activeSeason.id)
                 .eq('status', 'VALIDATED');
 
-            if (!members || !payments) {
-                setLoading(false);
-                return;
-            }
+            if (!members || !payments) { setLoading(false); return; }
 
             const paymentsByMember: Record<string, { types: Set<string>; months: Set<number> }> = {};
             payments.forEach(p => {
@@ -98,35 +98,22 @@ export default function Reminders() {
 
             const seasonStart = new Date(activeSeason.start_date);
             const now = new Date();
-
             const delinquentList: DelinquentMember[] = [];
+
             members.forEach(member => {
                 const memberPayments = paymentsByMember[member.id] || { types: new Set(), months: new Set() };
-
-                // Check registration
                 const owes_registration = !memberPayments.types.has('registration') && !memberPayments.types.has('annual');
-
-                // Check monthly payments (from individual start or season start to current month - 1)
                 const unpaid_months: number[] = [];
+
                 if (!memberPayments.types.has('annual')) {
                     const memberCreated = new Date(member.created_at);
-                    // Start from the latest of: season start or member creation month
-                    let checkDate = new Date(
-                        Math.max(seasonStart.getTime(), memberCreated.getTime())
-                    );
-
-                    // Normaliser au 1er du mois pour la comparaison
+                    let checkDate = new Date(Math.max(seasonStart.getTime(), memberCreated.getTime()));
                     checkDate = new Date(checkDate.getFullYear(), checkDate.getMonth(), 1);
-
-                    // End at the beginning of the current month
                     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
                     while (checkDate < currentMonthStart) {
                         const m = checkDate.getMonth() + 1;
-                        if (!memberPayments.months.has(m)) {
-                            unpaid_months.push(m);
-                        }
-                        // Advance one month
+                        if (!memberPayments.months.has(m)) unpaid_months.push(m);
                         checkDate.setMonth(checkDate.getMonth() + 1);
                     }
                 }
@@ -138,6 +125,8 @@ export default function Reminders() {
                         last_name: member.last_name,
                         phone: member.phone,
                         member_number: member.member_number,
+                        guardian_name: (member as any).guardian_name ?? null,
+                        guardian_phone: (member as any).guardian_phone ?? null,
                         owes_registration,
                         unpaid_months,
                     });
@@ -156,51 +145,54 @@ export default function Reminders() {
     const clearHistory = async () => {
         const { error } = await supabase.from('reminders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error) {
-            toast({ title: 'Erreur', description: 'Impossible de supprimer l\'historique.', variant: 'destructive' });
+            toast({ title: 'Erreur', description: "Impossible de supprimer l'historique.", variant: 'destructive' });
         } else {
-            toast({ title: 'Historique effacé', description: 'Tout l\'historique des rappels a été supprimé.' });
+            toast({ title: 'Historique effacé', description: "Tout l'historique des rappels a été supprimé." });
             fetchAll();
         }
     };
 
-    const handleSendReminder = async (member: DelinquentMember) => {
-        if (!member.phone) {
-            toast({ title: 'Erreur', description: 'Ce pratiquant n\'a pas de numéro de téléphone enregistré.', variant: 'destructive' });
-            return;
-        }
+    // ── Normalise un numéro sénégalais ────────────────────────────────────────
+    const normalizePhone = (phone: string) => {
+        let p = phone.replace(/\D/g, '');
+        if (p.length === 9 && p.startsWith('7')) p = '221' + p;
+        return p;
+    };
 
-        let phoneStr = member.phone.replace(/\D/g, '');
-        if (phoneStr.length === 9 && phoneStr.startsWith('7')) {
-            phoneStr = '221' + phoneStr;
+    // ── Construit le détail d'un pratiquant (pour le message) ────────────────
+    const buildMemberDetail = (member: DelinquentMember, activeSeason: any): { text: string; amount: number } => {
+        let amount = 0;
+        const parts: string[] = [];
+
+        if (member.owes_registration) {
+            parts.push(`inscription (${activeSeason.registration_fee} FCFA)`);
+            amount += activeSeason.registration_fee;
+        }
+        if (member.unpaid_months.length > 0) {
+            const monthsStr = member.unpaid_months.map(m => format(new Date(2024, m - 1), 'MMMM', { locale: fr })).join(', ');
+            const monthAmount = member.unpaid_months.length * activeSeason.monthly_fee;
+            parts.push(`mensualités de ${monthsStr} (${monthAmount} FCFA)`);
+            amount += monthAmount;
+        }
+        return { text: parts.join(' et '), amount };
+    };
+
+    // ── Rappel direct au pratiquant (comportement actuel) ────────────────────
+    const handleSendReminder = async (member: DelinquentMember) => {
+        const phone = member.phone;
+        if (!phone) {
+            toast({ title: 'Erreur', description: "Ce pratiquant n'a pas de numéro de téléphone.", variant: 'destructive' });
+            return;
         }
 
         const { data: activeSeason } = await supabase.from('seasons').select('*').eq('is_active', true).maybeSingle();
-        if (!activeSeason) {
-            toast({ title: 'Erreur', description: 'Aucune saison active trouvée.', variant: 'destructive' });
-            return;
-        }
+        if (!activeSeason) { toast({ title: 'Erreur', description: 'Aucune saison active.', variant: 'destructive' }); return; }
 
-        let totalAmount = 0;
-        let details = [];
+        const { text: detailsStr, amount: totalAmount } = buildMemberDetail(member, activeSeason);
+        const message = `VOVINAM UGB CLUB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non réglées. Total: ${totalAmount} FCFA. Wave au 75 557 55 51.`;
 
-        if (member.owes_registration) {
-            details.push(`inscription (${activeSeason.registration_fee} FCFA)`);
-            totalAmount += activeSeason.registration_fee;
-        }
+        window.open(`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`, '_blank');
 
-        if (member.unpaid_months.length > 0) {
-            const monthsStr = member.unpaid_months.map(m => format(new Date(2024, m - 1), 'MMMM', { locale: fr })).join(', ');
-            details.push(`mensualités de ${monthsStr} (${member.unpaid_months.length * activeSeason.monthly_fee} FCFA)`);
-            totalAmount += member.unpaid_months.length * activeSeason.monthly_fee;
-        }
-
-        const detailsStr = details.join(' et ');
-        const message = `VOVINAM UGB  CLUB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non reglees. Wave au 75 557 55 51.`;
-
-        const whatsappUrl = `https://wa.me/${phoneStr}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-
-        // On enregistre dans l'historique le premier motif de retard pour le suivi
         const type = member.owes_registration ? 'registration' : 'monthly';
         const monthNumber = member.unpaid_months.length > 0 ? member.unpaid_months[0] : null;
 
@@ -208,23 +200,66 @@ export default function Reminders() {
             id: crypto.randomUUID(),
             member_id: member.id,
             season_id: activeSeason.id,
-            type,
-            month_number: monthNumber,
-            status: 'sent',
-            sent_at: new Date().toISOString(),
+            type, month_number: monthNumber,
+            status: 'sent', sent_at: new Date().toISOString(),
         });
 
-        if (error) {
-            console.error('Erreur insert reminder:', error);
-            toast({ title: 'Erreur', description: `Impossible d'enregistrer le rappel: ${error.message}`, variant: 'destructive' });
-        } else {
-            toast({
-                title: 'Rappel enregistré',
-                description: 'Le rappel a été enregistré. Note : l\'envoi SMS n\'est pas disponible dans cette version.',
-            });
+        if (!error) {
+            toast({ title: 'Rappel enregistré' });
             fetchAll();
         }
     };
+
+    // ── Rappel groupé au tuteur (plusieurs élèves) ───────────────────────────
+    const handleSendGuardianReminder = async (group: GuardianGroup) => {
+        const { data: activeSeason } = await supabase.from('seasons').select('*').eq('is_active', true).maybeSingle();
+        if (!activeSeason) { toast({ title: 'Erreur', description: 'Aucune saison active.', variant: 'destructive' }); return; }
+
+        let totalAmount = 0;
+        const lines = group.students.map(student => {
+            const { text, amount } = buildMemberDetail(student, activeSeason);
+            totalAmount += amount;
+            return `• ${student.last_name.toUpperCase()} ${student.first_name} : ${text}`;
+        }).join('\n');
+
+        const message = `VOVINAM UGB CLUB:\nBonjour ${group.guardian_name}, rappel de paiement pour vos élève(s) :\n\n${lines}\n\nTotal : ${totalAmount} FCFA\nWave au 75 557 55 51.`;
+
+        window.open(`https://wa.me/${normalizePhone(group.guardian_phone)}?text=${encodeURIComponent(message)}`, '_blank');
+
+        // Enregistrer un rappel pour chaque élève du groupe
+        for (const student of group.students) {
+            const type = student.owes_registration ? 'registration' : 'monthly';
+            const monthNumber = student.unpaid_months.length > 0 ? student.unpaid_months[0] : null;
+            await supabase.from('reminders').insert({
+                id: crypto.randomUUID(),
+                member_id: student.id,
+                season_id: activeSeason.id,
+                type, month_number: monthNumber,
+                status: 'sent', sent_at: new Date().toISOString(),
+            });
+        }
+
+        toast({ title: `Rappel tuteur envoyé (${group.students.length} élève(s))` });
+        fetchAll();
+    };
+
+    // ── Calcul des groupes tuteurs ───────────────────────────────────────────
+    const guardianGroups: GuardianGroup[] = [];
+    const guardianPhoneMap: Record<string, GuardianGroup> = {};
+
+    delinquents.forEach(member => {
+        if (member.guardian_phone) {
+            if (!guardianPhoneMap[member.guardian_phone]) {
+                guardianPhoneMap[member.guardian_phone] = {
+                    guardian_name: member.guardian_name || 'Tuteur',
+                    guardian_phone: member.guardian_phone,
+                    students: [],
+                };
+                guardianGroups.push(guardianPhoneMap[member.guardian_phone]);
+            }
+            guardianPhoneMap[member.guardian_phone].students.push(member);
+        }
+    });
 
     const getStatusBadge = (status: string) => {
         if (status === 'sent') return <Badge className="bg-green-100 text-green-800 border-green-200">Enregistré</Badge>;
@@ -256,20 +291,8 @@ export default function Reminders() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Card className="bg-blue-50 border-blue-100 shadow-sm transition-all hover:shadow-md">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-bold text-blue-800 uppercase tracking-widest flex items-center gap-2">
-                                <Clock className="h-4 w-4" />Planning
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm font-medium text-blue-900 leading-snug">
-                                Vérifiez manuellement les retards et enregistrez les rappels.
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-red-50 border-red-100 shadow-sm transition-all hover:shadow-md">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Card className="bg-red-50 border-red-100 shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-xs font-bold text-red-800 uppercase tracking-widest flex items-center gap-2">
                                 <UserX className="h-4 w-4" />État Actuel
@@ -279,7 +302,17 @@ export default function Reminders() {
                             <p className="text-lg font-bold text-red-900">{delinquents.length} membre(s) en retard</p>
                         </CardContent>
                     </Card>
-                    <Card className="bg-green-50 border-green-100 shadow-sm transition-all hover:shadow-md sm:col-span-2 lg:col-span-1">
+                    <Card className="bg-amber-50 border-amber-100 shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-xs font-bold text-amber-800 uppercase tracking-widest flex items-center gap-2">
+                                <Shield className="h-4 w-4" />Tuteurs concernés
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-lg font-bold text-amber-900">{guardianGroups.length} tuteur(s)</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-green-50 border-green-100 shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-xs font-bold text-green-800 uppercase tracking-widest flex items-center gap-2">
                                 <UserCheck className="h-4 w-4" />Historique
@@ -294,15 +327,24 @@ export default function Reminders() {
                 </div>
 
                 <Tabs defaultValue="delinquents" className="w-full">
-                    <TabsList className="bg-muted p-1 rounded-xl w-full sm:w-auto grid grid-cols-2 sm:flex sm:inline-flex">
-                        <TabsTrigger value="delinquents" className="rounded-lg px-6 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    <TabsList className="bg-muted p-1 rounded-xl w-full sm:w-auto grid grid-cols-3 sm:flex sm:inline-flex">
+                        <TabsTrigger value="delinquents" className="rounded-lg px-4 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
                             <AlertCircle className="h-4 w-4 mr-2" />En retard
                         </TabsTrigger>
-                        <TabsTrigger value="history" className="rounded-lg px-6 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <TabsTrigger value="guardians" className="rounded-lg px-4 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <Shield className="h-4 w-4 mr-2" />Tuteurs
+                            {guardianGroups.length > 0 && (
+                                <span className="ml-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">
+                                    {guardianGroups.length}
+                                </span>
+                            )}
+                        </TabsTrigger>
+                        <TabsTrigger value="history" className="rounded-lg px-4 py-2 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
                             <History className="h-4 w-4 mr-2" />Historique
                         </TabsTrigger>
                     </TabsList>
 
+                    {/* ── Tab En retard ─────────────────────────────────────── */}
                     <TabsContent value="delinquents" className="mt-6">
                         <Card className="overflow-hidden border-none shadow-md">
                             <CardHeader className="bg-white pb-4 border-b">
@@ -325,6 +367,7 @@ export default function Reminders() {
                                                 <TableRow className="bg-muted/50">
                                                     <TableHead className="whitespace-nowrap font-bold">N°</TableHead>
                                                     <TableHead className="whitespace-nowrap font-bold">Pratiquant</TableHead>
+                                                    <TableHead className="whitespace-nowrap font-bold">Tuteur</TableHead>
                                                     <TableHead className="whitespace-nowrap font-bold">Manquant</TableHead>
                                                     <TableHead className="text-right whitespace-nowrap font-bold no-print">Action</TableHead>
                                                 </TableRow>
@@ -333,14 +376,26 @@ export default function Reminders() {
                                                 {delinquents.map((member) => (
                                                     <TableRow key={member.id} className="hover:bg-muted/30 transition-colors">
                                                         <TableCell className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{member.member_number}</TableCell>
-                                                        <TableCell className="min-w-[180px]">
+                                                        <TableCell className="min-w-[160px]">
                                                             <div className="font-bold text-navy truncate">
                                                                 {member.first_name} {member.last_name}
                                                             </div>
-                                                            <div className="text-[10px] text-muted-foreground font-mono mt-1 flex items-center gap-1">
-                                                                <div className="w-1 h-1 rounded-full bg-slate-300" />
+                                                            <div className="text-[10px] text-muted-foreground font-mono mt-1">
                                                                 {member.phone || 'Pas de téléphone'}
                                                             </div>
+                                                        </TableCell>
+                                                        <TableCell className="min-w-[130px]">
+                                                            {member.guardian_name ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <Shield className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                                                                    <div>
+                                                                        <p className="text-xs font-medium text-amber-800 leading-none">{member.guardian_name}</p>
+                                                                        <p className="text-[10px] text-muted-foreground">{member.guardian_phone}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted-foreground text-xs">—</span>
+                                                            )}
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex flex-wrap gap-1">
@@ -360,10 +415,10 @@ export default function Reminders() {
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="h-9 px-4 rounded-xl border-navy/20 hover:border-navy hover:bg-navy/5 text-navy text-xs font-semibold overflow-hidden transition-all whitespace-nowrap"
+                                                                className="h-9 px-4 rounded-xl border-navy/20 hover:border-navy hover:bg-navy/5 text-navy text-xs font-semibold whitespace-nowrap"
                                                                 onClick={() => handleSendReminder(member)}
                                                             >
-                                                                Notifier
+                                                                {member.guardian_phone ? '↗ Direct' : 'Notifier'}
                                                             </Button>
                                                         </TableCell>
                                                     </TableRow>
@@ -376,6 +431,82 @@ export default function Reminders() {
                         </Card>
                     </TabsContent>
 
+                    {/* ── Tab Tuteurs ───────────────────────────────────────── */}
+                    <TabsContent value="guardians" className="mt-6">
+                        <Card className="overflow-hidden border-none shadow-md">
+                            <CardHeader className="bg-white pb-4 border-b">
+                                <CardTitle className="text-xl font-display font-semibold text-navy flex items-center gap-2">
+                                    <Shield className="h-5 w-5 text-amber-500" />
+                                    Rappels groupés par tuteur
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 sm:p-6 space-y-4">
+                                {loading ? (
+                                    <div className="text-center py-12 animate-pulse text-muted-foreground">Chargement…</div>
+                                ) : guardianGroups.length === 0 ? (
+                                    <div className="text-center py-12 text-muted-foreground italic flex flex-col items-center gap-3">
+                                        <Shield className="h-10 w-10 text-muted-foreground/30" />
+                                        <p>Aucun tuteur avec des élèves en retard.</p>
+                                    </div>
+                                ) : (
+                                    guardianGroups.map((group) => (
+                                        <div key={group.guardian_phone} className="rounded-xl border border-amber-200 bg-amber-50/50 overflow-hidden">
+                                            {/* En-tête tuteur */}
+                                            <div className="flex items-center justify-between px-4 py-3 bg-amber-100/70 border-b border-amber-200">
+                                                <div className="flex items-center gap-2">
+                                                    <Shield className="h-4 w-4 text-amber-600" />
+                                                    <div>
+                                                        <p className="font-bold text-amber-900 text-sm">{group.guardian_name}</p>
+                                                        <p className="text-xs text-amber-700">{group.guardian_phone}</p>
+                                                    </div>
+                                                    <Badge className="ml-2 bg-amber-200 text-amber-800 border-amber-300 text-xs">
+                                                        <Users className="h-3 w-3 mr-1" />
+                                                        {group.students.length} élève(s)
+                                                    </Badge>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    className="h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold gap-1.5"
+                                                    onClick={() => handleSendGuardianReminder(group)}
+                                                >
+                                                    <Bell className="h-3.5 w-3.5" />
+                                                    Notifier le tuteur
+                                                </Button>
+                                            </div>
+
+                                            {/* Liste des élèves */}
+                                            <div className="divide-y divide-amber-100">
+                                                {group.students.map((student) => (
+                                                    <div key={student.id} className="flex items-center justify-between px-4 py-2.5">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-navy">
+                                                                {student.first_name} {student.last_name}
+                                                            </p>
+                                                            <p className="text-[10px] text-muted-foreground font-mono">
+                                                                {student.member_number && `#${student.member_number} · `}{student.phone || ''}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-1 justify-end">
+                                                            {student.owes_registration && (
+                                                                <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase">INSCRIPTION</span>
+                                                            )}
+                                                            {student.unpaid_months.map(m => (
+                                                                <span key={m} className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 text-[9px] font-black uppercase">
+                                                                    {getShortMonthName(m)}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* ── Tab Historique ────────────────────────────────────── */}
                     <TabsContent value="history" className="mt-6">
                         <Card className="overflow-hidden border-none shadow-md">
                             <CardHeader className="bg-white pb-4 border-b flex flex-row items-center justify-between">

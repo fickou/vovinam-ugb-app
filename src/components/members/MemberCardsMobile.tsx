@@ -1,10 +1,10 @@
 /**
  * @file src/components/members/MemberCardsMobile.tsx
- * Affichage des membres sous forme de cards (Mobile).
+ * Affichage des membres sous forme de cards (Mobile) — avec info Tuteur.
  */
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Shield } from 'lucide-react';
 import { MemberStatusBadge } from './MemberStatusBadge';
 import { formatDate } from '@/lib/utils';
 import type { Member } from '@/types';
@@ -46,6 +46,19 @@ export function MemberCardsMobile({ members, isAdmin, onEdit, onDelete }: Props)
             {member.phone && <p className="truncate">{member.phone}</p>}
             {member.email && <p className="truncate">{member.email}</p>}
           </div>
+
+          {/* Tuteur */}
+          {member.guardian_name && (
+            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
+              <Shield className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <span className="text-xs font-medium text-amber-800">{member.guardian_name}</span>
+                {member.guardian_phone && (
+                  <span className="text-xs text-amber-600 ml-2">{member.guardian_phone}</span>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 items-center pt-2 border-t border-slate-100">
             <MemberStatusBadge status={member.status} />

@@ -34,6 +34,8 @@ function buildDefaultForm(): MemberFormData {
     phone: '',
     email: '',
     status: 'active',
+    guardian_name: '',
+    guardian_phone: '',
   };
 }
 
@@ -75,6 +77,8 @@ export default function Members() {
       phone: member.phone || '',
       email: member.email || '',
       status: member.status,
+      guardian_name: member.guardian_name || '',
+      guardian_phone: member.guardian_phone || '',
     });
     setIsFormOpen(true);
   };

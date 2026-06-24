@@ -20,6 +20,8 @@ export interface Member {
   email: string | null;
   status: MemberStatus;
   member_number: string | null;
+  guardian_name: string | null;
+  guardian_phone: string | null;
   created_at: string;
 }
 
@@ -29,6 +31,8 @@ export interface MemberFormData {
   phone: string;
   email: string;
   status: MemberStatus;
+  guardian_name: string;
+  guardian_phone: string;
 }
 
 // ─── Saisons ─────────────────────────────────────────────────────────────────
