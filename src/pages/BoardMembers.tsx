@@ -11,7 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Users2, Pencil, Trash2, Plus } from 'lucide-react';
+import { Users2, Pencil, Trash2, Plus, Printer } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -83,7 +83,46 @@ export default function BoardMembers() {
         if (error) {
             toast({ title: 'Erreur', description: 'Impossible de charger les membres du bureau', variant: 'destructive' });
         } else {
-            setBoardMembers((data as BoardMember[]) || []);
+            // Sort hierarchically
+            const getRank = (pos: string) => {
+                const p = pos.toLowerCase();
+                
+                // 1. Président & 2. Vice président & 5. Président organisation
+                if (p.includes('président') || p.includes('president')) {
+                    if (p.includes('vice')) return 2;
+                    if (p.includes('organisation')) return 5;
+                    return 1;
+                }
+                // 3. Secrétaire général
+                if (p.includes('secrétaire') || p.includes('secretaire') || p.includes('sg')) return 3;
+                // 4. Trésorière / Trésorier
+                if (p.includes('trésori') || p.includes('tresori')) return 4;
+                // 5. Organisation (au cas où ce n'est pas écrit "président organisation") & 6. Adjoint organisation
+                if (p.includes('organisation')) {
+                    if (p.includes('adjoint')) return 6;
+                    return 5;
+                }
+                // 7. Chargé communication
+                if (p.includes('communication')) return 7;
+                // 8. Chargé des relations extérieures
+                if (p.includes('relations') || p.includes('extérieur') || p.includes('exterieur')) return 8;
+                // 9. Commissaire aux comptes
+                if (p.includes('commissaire') || p.includes('compte')) return 9;
+                // 10. Commission féminine
+                if (p.includes('féminine') || p.includes('feminine') || p.includes('femme')) return 10;
+                
+                // Autres postes à la fin
+                return 100;
+            };
+
+            const sorted = ((data as BoardMember[]) || []).sort((a, b) => {
+                const rankA = getRank(a.position);
+                const rankB = getRank(b.position);
+                if (rankA !== rankB) return rankA - rankB;
+                return a.position.localeCompare(b.position);
+            });
+
+            setBoardMembers(sorted);
         }
         setLoading(false);
     };
@@ -155,20 +194,38 @@ export default function BoardMembers() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {isAdmin && (
+                        <div className="flex gap-2 w-full sm:w-auto">
                             <Button
-                                onClick={() => setIsAddDialogOpen(true)}
-                                className="w-full sm:w-auto bg-navy hover:bg-navy-light text-white h-12 rounded-xl px-6 gap-2 shadow-lg shadow-navy/20 transition-all active:scale-95"
+                                onClick={() => window.print()}
+                                variant="outline"
+                                className="w-full sm:w-auto h-12 rounded-xl px-4 gap-2 border-navy/20 hover:bg-navy/5 text-navy transition-all no-print"
                             >
-                                <Plus className="h-5 w-5" />
-                                <span className="font-bold">Nommer un membre</span>
+                                <Printer className="h-5 w-5" />
+                                <span className="font-bold hidden sm:inline">Imprimer / PDF</span>
                             </Button>
-                        )}
+                            {isAdmin && (
+                                <Button
+                                    onClick={() => setIsAddDialogOpen(true)}
+                                    className="w-full sm:w-auto bg-navy hover:bg-navy-light text-white h-12 rounded-xl px-6 gap-2 shadow-lg shadow-navy/20 transition-all active:scale-95 no-print"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                    <span className="font-bold">Nommer</span>
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <Card className="border-none shadow-xl shadow-navy/5 rounded-2xl overflow-hidden bg-white/50 backdrop-blur-sm">
-                    <CardHeader className="bg-muted/30 border-b pb-4">
+                {/* Print Header - Only visible when printing */}
+                <div className="hidden print:block text-center mb-8">
+                    <h1 className="text-2xl font-bold text-black uppercase mb-1">Vovinam Viet Vo Dao UGB</h1>
+                    <h2 className="text-xl font-bold text-gray-800">Composition du Bureau</h2>
+                    <p className="text-sm text-gray-600 mt-2">Saison : {seasons.find(s => s.id === selectedSeasonId)?.name || 'N/A'}</p>
+                    <div className="w-24 h-1 bg-black mx-auto mt-4 mb-8"></div>
+                </div>
+
+                <Card className="border-none shadow-xl shadow-navy/5 rounded-2xl overflow-hidden bg-white/50 backdrop-blur-sm print:shadow-none print:bg-transparent print:rounded-none">
+                    <CardHeader className="bg-muted/30 border-b pb-4 print:hidden">
                         <CardTitle className="flex items-center gap-2 text-navy text-lg font-display">
                             <Users2 className="h-5 w-5 text-navy-light" />
                             <span>Composition du bureau</span>
@@ -191,39 +248,44 @@ export default function BoardMembers() {
                             <div className="overflow-x-auto w-full">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-muted/50 border-none">
-                                            <TableHead className="font-bold whitespace-nowrap px-6 py-4">Poste / Fonction</TableHead>
-                                            <TableHead className="font-bold whitespace-nowrap px-6 py-4">Pratiquant</TableHead>
-                                            <TableHead className="font-bold whitespace-nowrap px-6 py-4">Contact (Email / Tél)</TableHead>
-                                            {isAdmin && <TableHead className="text-right font-bold whitespace-nowrap px-6 py-4">Actions</TableHead>}
+                                        <TableRow className="bg-muted/50 border-none print:bg-gray-100 print:border-b-2 print:border-gray-800">
+                                            <TableHead className="font-bold text-black whitespace-nowrap px-6 py-4">Poste / Fonction</TableHead>
+                                            <TableHead className="font-bold text-black whitespace-nowrap px-6 py-4">Pratiquant</TableHead>
+                                            <TableHead className="font-bold text-black whitespace-nowrap px-6 py-4">Contact</TableHead>
+                                            {isAdmin && <TableHead className="text-right font-bold whitespace-nowrap px-6 py-4 no-print">Actions</TableHead>}
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {boardMembers.map((bm) => (
-                                            <TableRow key={bm.id} className="hover:bg-navy/5 transition-colors border-b border-navy/5 last:border-none">
+                                            <TableRow key={bm.id} className="hover:bg-navy/5 transition-colors border-b border-navy/5 last:border-none print:border-gray-300">
                                                 <TableCell className="px-6 py-4">
-                                                    <Badge className="bg-navy/10 text-navy hover:bg-navy/10 border-none px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                                                    <span className="print:hidden">
+                                                        <Badge className="bg-navy/10 text-navy hover:bg-navy/10 border-none px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                                                            {bm.position}
+                                                        </Badge>
+                                                    </span>
+                                                    <span className="hidden print:inline font-bold uppercase text-black text-sm">
                                                         {bm.position}
-                                                    </Badge>
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
                                                     <div className="flex flex-col">
-                                                        <span className="font-display font-bold text-navy leading-tight">
+                                                        <span className="font-display font-bold text-navy print:text-black leading-tight text-lg">
                                                             {bm.members?.first_name} {bm.members?.last_name}
                                                         </span>
-                                                        <span className="text-[10px] text-muted-foreground font-mono font-bold tracking-tighter uppercase mt-0.5">
+                                                        <span className="text-[10px] text-muted-foreground font-mono font-bold tracking-tighter uppercase mt-0.5 print:text-gray-500">
                                                             N° {bm.members?.member_number || '---'}
                                                         </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="px-6 py-4">
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className="text-sm font-medium text-slate-600 truncate max-w-[200px]">{bm.members?.email || '-'}</span>
-                                                        <span className="text-xs font-bold text-navy-light">{bm.members?.phone || '-'}</span>
+                                                        <span className="text-sm font-medium text-slate-600 print:text-black truncate max-w-[200px]">{bm.members?.email || '-'}</span>
+                                                        <span className="text-xs font-bold text-navy-light print:text-black">{bm.members?.phone || '-'}</span>
                                                     </div>
                                                 </TableCell>
                                                 {isAdmin && (
-                                                    <TableCell className="px-6 py-4 text-right">
+                                                    <TableCell className="px-6 py-4 text-right no-print">
                                                         <div className="flex justify-end gap-1 sm:gap-2">
                                                             <Button
                                                                 variant="ghost"
