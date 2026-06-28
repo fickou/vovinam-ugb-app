@@ -15,9 +15,10 @@ interface Props {
   isAdmin: boolean;
   onEdit: (m: Member) => void;
   onDelete: (m: Member) => void;
+  onWelcome: (m: Member) => void;
 }
 
-export function MemberTableDesktop({ members, isAdmin, onEdit, onDelete }: Props) {
+export function MemberTableDesktop({ members, isAdmin, onEdit, onDelete, onWelcome }: Props) {
   return (
     <div className="overflow-x-auto w-full">
       <Table>
@@ -36,7 +37,21 @@ export function MemberTableDesktop({ members, isAdmin, onEdit, onDelete }: Props
           {members.map((member) => (
             <TableRow key={member.id} className={`${member.status !== 'active' ? 'no-print' : ''} hover:bg-muted/30 transition-colors`}>
               <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">{member.member_number}</TableCell>
-              <TableCell className="font-semibold text-slate-800 whitespace-nowrap">{member.first_name} {member.last_name}</TableCell>
+              <TableCell className="font-semibold text-slate-800 whitespace-nowrap">
+                <div className="flex items-center gap-2">
+                  {member.status === 'new' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-[10px] px-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 no-print"
+                      onClick={() => onWelcome(member)}
+                    >
+                      Bienvenu
+                    </Button>
+                  )}
+                  <span>{member.first_name} {member.last_name}</span>
+                </div>
+              </TableCell>
               <TableCell className="whitespace-nowrap">{member.phone || '-'}</TableCell>
               <TableCell className="whitespace-nowrap max-w-[200px] truncate">{member.email || '-'}</TableCell>
               <TableCell className="whitespace-nowrap">

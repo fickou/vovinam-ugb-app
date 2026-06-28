@@ -14,16 +14,27 @@ interface Props {
   isAdmin: boolean;
   onEdit: (m: Member) => void;
   onDelete: (m: Member) => void;
+  onWelcome: (m: Member) => void;
 }
 
-export function MemberCardsMobile({ members, isAdmin, onEdit, onDelete }: Props) {
+export function MemberCardsMobile({ members, isAdmin, onEdit, onDelete, onWelcome }: Props) {
   return (
     <div className="space-y-3 px-3 py-4">
       {members.map((member) => (
         <Card key={member.id} className="p-4 border border-gray-200">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-slate-800 text-sm truncate">
+              <h3 className="font-semibold text-slate-800 text-sm truncate flex items-center gap-2">
+                {member.status === 'new' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-5 text-[10px] px-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 no-print"
+                    onClick={(e) => { e.stopPropagation(); onWelcome(member); }}
+                  >
+                    Bienvenu
+                  </Button>
+                )}
                 {member.first_name} {member.last_name}
               </h3>
               {member.member_number && (

@@ -289,9 +289,8 @@ export default function Auth() {
               setTelephone('');
             }}
           >
-            <TabsList className="grid w-full grid-cols-2 mb-4 h-10">
+            <TabsList className="grid w-full grid-cols-1 mb-4 h-10">
               <TabsTrigger value="login" className="text-xs sm:text-sm">Connexion</TabsTrigger>
-              <TabsTrigger value="signup" className="text-xs sm:text-sm">Inscription</TabsTrigger>
             </TabsList>
 
             {/* LOGIN TAB */}

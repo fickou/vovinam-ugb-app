@@ -114,3 +114,13 @@ export function sumExpenses(amounts: number[]): number {
 export function sumIncomes(amounts: number[]): number {
   return amounts.filter((a) => a < 0).reduce((s, a) => s + Math.abs(a), 0);
 }
+
+/**
+ * Normalise un numéro de téléphone (ajoute 221 si nécessaire).
+ */
+export function normalizePhone(phone: string): string {
+  if (!phone) return '';
+  let p = phone.replace(/\D/g, '');
+  if (p.length === 9 && p.startsWith('7')) p = '221' + p;
+  return p;
+}

@@ -24,7 +24,7 @@ import { MemberFormDialog } from '@/components/members/MemberFormDialog';
 import { MemberTableDesktop } from '@/components/members/MemberTableDesktop';
 import { MemberCardsMobile } from '@/components/members/MemberCardsMobile';
 
-import { MEMBER_STATUS_LABELS } from '@/lib/utils';
+import { MEMBER_STATUS_LABELS, normalizePhone } from '@/lib/utils';
 import type { Member, MemberFormData, MemberStatus } from '@/types';
 
 function buildDefaultForm(): MemberFormData {
@@ -104,6 +104,39 @@ export default function Members() {
     setSelectedMember(null);
   };
 
+  const handleWelcome = (member: Member) => {
+    const targetPhone = member.guardian_phone || member.phone;
+    if (!targetPhone) {
+      alert("Ce pratiquant n'a pas de numéro de téléphone renseigné.");
+      return;
+    }
+    
+    const message = `Bonjour *${member.first_name} ${member.last_name}*,
+Bienvenue au *VOVINAM VIET VO DAO UGB CLUB* ! 
+Nous sommes heureux de vous accueillir parmi nous et vous souhaitons une excellente 
+expérience au sein du club. 
+
+Voici quelques informations utiles pour bien débuter : 
+*Lieu d'entraînement* : Université Gaston Berger de Saint-Louis (Dojo)
+*Horaires d'entraînement* :
+  • Lundi : 18h00 – 20h00
+  • Mercredi : 18h00 – 20h00
+  • Vendredi : 18h00 – 20h00
+*Inscription et Mensualité* :
+  • Frais d'inscription : 2 000 FCFA
+  • Mensualité : 1 000 FCFA
+
+Retrouvez toutes les informations du club (profil, paiements, actualités, événements, etc.) sur :
+https://vovinam-ugb-sc.netlify.app/
+
+Sportivement,
+Le Bureau
+*VOVINAM VIET VO DAO UGB CLUB*`;
+
+    const url = `https://wa.me/${normalizePhone(targetPhone)}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -154,9 +187,9 @@ export default function Members() {
             ) : filteredMembers.length === 0 ? (
               <EmptyState message="Aucun pratiquant trouvé" />
             ) : isMobileView ? (
-              <MemberCardsMobile members={filteredMembers} isAdmin={isAdmin} onEdit={openEdit} onDelete={openDelete} />
+              <MemberCardsMobile members={filteredMembers} isAdmin={isAdmin} onEdit={openEdit} onDelete={openDelete} onWelcome={handleWelcome} />
             ) : (
-              <MemberTableDesktop members={filteredMembers} isAdmin={isAdmin} onEdit={openEdit} onDelete={openDelete} />
+              <MemberTableDesktop members={filteredMembers} isAdmin={isAdmin} onEdit={openEdit} onDelete={openDelete} onWelcome={handleWelcome} />
             )}
           </CardContent>
         </Card>
