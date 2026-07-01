@@ -129,7 +129,7 @@ export function PassageCardTemplate({
                   marginTop: '4px',
                 }}
               >
-                {form.clubName ? `${form.clubName} • LIGUE DE ${form.ligue}` : `VOVINAM UGB CLUB • LIGUE DE ${form.ligue}`}
+                {form.clubName ? `${form.clubName} • LIGUE DE ${form.ligue}` : `Vovinam CLUB UGB • LIGUE DE ${form.ligue}`}
               </div>
             </div>
 

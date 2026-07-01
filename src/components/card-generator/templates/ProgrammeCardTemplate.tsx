@@ -24,7 +24,7 @@ export function ProgrammeCardTemplate({ form, clubLogo, vovinamLogoImg }: Props)
         <div style={{ textAlign: 'center', flex: 1, padding: '0 16px' }}>
           <div style={{ color: '#dc2626', fontFamily: "'Oswald', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '4px' }}>Vovinam Việt Võ Đạo</div>
           <div style={{ color: '#ffffff', fontFamily: "'Oswald', sans-serif", fontSize: '20px', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>Programme d'Activités</div>
-          <div style={{ color: '#94a3b8', fontFamily: "'Oswald', sans-serif", fontSize: '12px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '2px' }}>Vovinam UGB CLUB • Ligue de {form.ligue}</div>
+          <div style={{ color: '#94a3b8', fontFamily: "'Oswald', sans-serif", fontSize: '12px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '2px' }}>Vovinam CLUB UGB • Ligue de {form.ligue}</div>
         </div>
         <div style={{ width: '72px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <img src={vovinamLogoImg} alt="Vovinam" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }} crossOrigin="anonymous" />

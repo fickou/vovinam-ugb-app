@@ -41,5 +41,5 @@ define('TRACCAR_SIM_SLOT', null); // 0 pour SIM 1, 1 pour SIM 2
 // TWILIO CONFIG (Optional)
 define('SMS_API_KEY', 'YOUR_API_KEY');
 define('SMS_API_SECRET', 'YOUR_API_SECRET');
-define('SMS_SENDER_ID', 'VOVINAM UGB SC'); 
+define('SMS_SENDER_ID', 'Vovinam CLUB UGB'); 
 define('TWILIO_FROM_NUMBER', '+221704639508');

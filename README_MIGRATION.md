@@ -1,4 +1,4 @@
-# Vovinam UGB SC - Migration MySQL & PHP
+# Vovinam CLUB UGB - Migration MySQL & PHP
 
 Cette version est une migration du projet original vers une architecture autonome utilisant **MySQL** et **PHP**, remplaçant ainsi Supabase.
 

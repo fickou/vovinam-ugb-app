@@ -37,8 +37,8 @@ export default function PublicNavbar() {
                         <img src={logo} alt="Logo" className="w-full h-full object-contain scale-[1.3] origin-center drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]" />
                     </div>
                     <span className="font-display font-black text-white text-base tracking-widest uppercase hidden sm:inline">
-                        Vovinam <span className="text-[#c0392b]">UGB</span>
-                        <span className="text-[#e5a800] ml-1">SC</span>
+                        Vovinam <span className="text-[#c0392b]">CLUB</span>
+                        <span className="text-[#e5a800] ml-1">UGB</span>
                     </span>
                 </button>
 

@@ -269,7 +269,7 @@ export default function Auth() {
             </div>
           </div>
 
-          <CardTitle className="text-center text-xl sm:text-2xl">Vovinam UGB SC</CardTitle>
+          <CardTitle className="text-center text-xl sm:text-2xl">Vovinam CLUB UGB</CardTitle>
           <CardDescription className="text-center text-xs sm:text-sm">Connexion à votre espace</CardDescription>
         </CardHeader>
 

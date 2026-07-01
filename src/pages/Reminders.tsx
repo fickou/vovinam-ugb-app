@@ -189,7 +189,7 @@ export default function Reminders() {
         if (!activeSeason) { toast({ title: 'Erreur', description: 'Aucune saison active.', variant: 'destructive' }); return; }
 
         const { text: detailsStr, amount: totalAmount } = buildMemberDetail(member, activeSeason);
-        const message = `VOVINAM UGB CLUB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non réglées. Total: ${totalAmount} FCFA. Wave au 75 557 55 51.`;
+        const message = `Vovinam CLUB UGB:\nBonjour ${member.first_name.toUpperCase()} ${member.last_name.toUpperCase()}, rappel: ${detailsStr} non réglées. Total: ${totalAmount} FCFA. Wave au 75 557 55 51.`;
 
         window.open(`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`, '_blank');
 
@@ -222,7 +222,7 @@ export default function Reminders() {
             return `• ${student.last_name.toUpperCase()} ${student.first_name} : ${text}`;
         }).join('\n');
 
-        const message = `VOVINAM UGB CLUB:\nBonjour ${group.guardian_name}, rappel de paiement pour vos élève(s) :\n\n${lines}\n\nTotal : ${totalAmount} FCFA\nWave au 75 557 55 51.`;
+        const message = `Vovinam CLUB UGB:\nBonjour ${group.guardian_name}, rappel de paiement pour vos élève(s) :\n\n${lines}\n\nTotal : ${totalAmount} FCFA\nWave au 75 557 55 51.`;
 
         window.open(`https://wa.me/${normalizePhone(group.guardian_phone)}?text=${encodeURIComponent(message)}`, '_blank');
 

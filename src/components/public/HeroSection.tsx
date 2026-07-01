@@ -72,7 +72,7 @@ export default function HeroSection() {
                 {/* Logos */}
                 <div className="flex items-center gap-8 sm:gap-16 mb-12">
                     {[
-                        { src: logo, alt: 'Logo Club UGB', label: 'UGB SC' },
+                        { src: logo, alt: 'Logo Club UGB', label: 'CLUB UGB' },
                         { src: vovinamLogo, alt: 'Logo Vovinam Viet Vo Dao', label: 'VVD' },
                     ].map((lg, i) => (
                         <div key={i} className="flex flex-col items-center gap-2">
