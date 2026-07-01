@@ -36,10 +36,10 @@ export default function HeroSection() {
             {data.backgroundImageUrl ? (
                 <div className="absolute inset-0">
                     <div 
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90"
                         style={{ backgroundImage: `url(${data.backgroundImageUrl})` }}
                     />
-                    <div className="absolute inset-0 bg-[#0f172a]/70 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-[#0f172a]/0 mix-blend-multiply" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f172a]" />
                 </div>
             ) : null}
