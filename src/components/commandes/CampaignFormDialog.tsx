@@ -199,6 +199,30 @@ export function CampaignFormDialog({
             />
           </div>
 
+          {/* Marge */}
+          <div className="space-y-1.5">
+            <Label htmlFor="camp-margin">
+              Marge du club par article (FCFA)
+              <span className="text-muted-foreground text-xs ml-1">(bénéfice par pièce vendue)</span>
+            </Label>
+            <Input
+              id="camp-margin"
+              type="number"
+              min="0"
+              step="100"
+              value={formData.margin}
+              onChange={set('margin')}
+              placeholder="ex: 500"
+            />
+            {formData.price && formData.margin && (
+              <p className="text-xs text-muted-foreground bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5 flex gap-2 flex-wrap">
+                <span>💰 Prix confectionneur : <strong>{(parseFloat(formData.price) - parseFloat(formData.margin || '0')).toLocaleString('fr-FR')} FCFA</strong></span>
+                <span>·</span>
+                <span>🏆 Gain club : <strong>{parseFloat(formData.margin || '0').toLocaleString('fr-FR')} FCFA / article</strong></span>
+              </p>
+            )}
+          </div>
+
           {/* Tailles disponibles */}
           <div className="space-y-1.5">
             <Label htmlFor="camp-sizes">

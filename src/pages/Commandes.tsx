@@ -4,7 +4,7 @@ import { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ShoppingBag, LayoutGrid } from 'lucide-react';
+import { Plus, ShoppingBag, LayoutGrid, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrderCampaigns } from '@/hooks/useOrderCampaigns';
 import { useOrders } from '@/hooks/useOrders';
@@ -43,6 +43,7 @@ export default function Commandes() {
       product_type:     c.product_type,
       description:      c.description ?? '',
       price:            String(c.price),
+      margin:           String(c.margin ?? ''),
       available_sizes:  c.available_sizes.join(', '),
       deadline:         c.deadline ?? '',
       is_active:        c.is_active,
@@ -98,6 +99,18 @@ export default function Commandes() {
   const totalOrders     = orders.length;
   const paidOrders      = orders.filter((o) => o.is_paid).length;
 
+  // Calcul du gain total : pour chaque commande payée, on cherche la marge de sa campagne
+  const totalGain = orders
+    .filter((o) => o.is_paid)
+    .reduce((sum, o) => {
+      const campaign = campaigns.find((c) => c.id === o.campaign_id);
+      const margin = campaign?.margin ?? 0;
+      return sum + margin * o.quantity;
+    }, 0);
+
+  const formatFCFA = (n: number) =>
+    new Intl.NumberFormat('fr-SN', { maximumFractionDigits: 0 }).format(n) + ' FCFA';
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -116,17 +129,26 @@ export default function Commandes() {
         />
 
         {/* ── Stats rapides ── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Campagnes actives', value: activeCampaigns, color: 'text-emerald-600' },
-            { label: 'Commandes reçues', value: totalOrders, color: 'text-navy' },
-            { label: 'Paiements validés', value: paidOrders, color: 'text-amber-600' },
+            { label: 'Campagnes actives', value: activeCampaigns, color: 'text-emerald-600', sub: null },
+            { label: 'Commandes reçues', value: totalOrders, color: 'text-navy', sub: null },
+            { label: 'Paiements validés', value: paidOrders, color: 'text-amber-600', sub: null },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-white rounded-2xl shadow-sm border p-4 text-center">
               <p className={`text-3xl font-bold ${color}`}>{value}</p>
               <p className="text-xs text-muted-foreground mt-1">{label}</p>
             </div>
           ))}
+          {/* Gain total */}
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl shadow-sm p-4 text-center text-white">
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <TrendingUp className="h-4 w-4 opacity-80" />
+              <p className="text-xs font-medium opacity-80">Gain total club</p>
+            </div>
+            <p className="text-2xl font-bold">{formatFCFA(totalGain)}</p>
+            <p className="text-xs opacity-70 mt-0.5">sur commandes payées</p>
+          </div>
         </div>
 
         {/* ── Onglets ── */}

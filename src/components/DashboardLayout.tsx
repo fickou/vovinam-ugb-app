@@ -20,6 +20,7 @@ import {
   Scale,
   Award,
   ShoppingBag,
+  PieChart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +56,7 @@ const mainMenuItems = [
   { title: 'Passage de Grade',url: '/dashboard/passage',    icon: Award },
   { title: 'Commandes',       url: '/dashboard/commandes',  icon: ShoppingBag },
   { title: 'Rapports',        url: '/dashboard/reports',    icon: BarChart3 },
+  { title: 'Analyse',         url: '/dashboard/analytics',  icon: PieChart },
 ];
 
 import { Globe } from 'lucide-react';

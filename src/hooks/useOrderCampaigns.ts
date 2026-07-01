@@ -47,6 +47,7 @@ function parseCampaignForm(form: CampaignFormData, userId: string) {
     product_type: form.product_type.trim(),
     description: form.description.trim() || null,
     price: parseFloat(form.price) || 0,
+    margin: parseFloat(form.margin) || 0,
     available_sizes: form.available_sizes
       .split(',')
       .map((s) => s.trim())

@@ -57,6 +57,34 @@ export function OrdersTable({
   const totalQty = filtered.reduce((s, o) => s + o.quantity, 0);
   const paidQty = paidOrders.reduce((s, o) => s + o.quantity, 0);
 
+  const getCampaign = (campaignId: string) =>
+    campaigns.find((c) => c.id === campaignId);
+
+  const getGain = (order: Order) => {
+    const c = getCampaign(order.campaign_id);
+    if (!c || !c.margin) return null;
+    return c.margin * order.quantity;
+  };
+
+  const totalGainFiltered = filtered
+    .filter((o) => o.is_paid)
+    .reduce((s, o) => {
+      const g = getGain(o);
+      return s + (g ?? 0);
+    }, 0);
+
+  const gainsByCampaign = campaigns
+    .map(c => {
+      const gain = filtered
+        .filter(o => o.is_paid && o.campaign_id === c.id)
+        .reduce((s, o) => s + (c.margin ?? 0) * o.quantity, 0);
+      return { id: c.id, name: c.name, gain };
+    })
+    .filter(c => c.gain > 0);
+
+  const formatFCFA = (n: number) =>
+    new Intl.NumberFormat('fr-SN', { maximumFractionDigits: 0 }).format(n) + ' F';
+
   const handleValidate = (id: string) => {
     if (!user) return;
     setPendingId(id);
@@ -146,6 +174,16 @@ export function OrdersTable({
         <span className="bg-amber-50 text-amber-700 rounded-full px-3 py-1">
           <strong>{totalQty - paidQty}</strong> en attente
         </span>
+        {gainsByCampaign.map(c => (
+          <span key={c.id} className="bg-teal-50/50 text-teal-700 border border-teal-100 rounded-full px-3 py-1 font-medium">
+            Gain {c.name} : <strong>{formatFCFA(c.gain)}</strong>
+          </span>
+        ))}
+        {totalGainFiltered > 0 && (
+          <span className="bg-teal-100 text-teal-800 rounded-full px-3 py-1 font-bold">
+            📈 Gain Total : {formatFCFA(totalGainFiltered)}
+          </span>
+        )}
       </div>
 
       {/* ── Table ── */}
@@ -165,6 +203,7 @@ export function OrdersTable({
                 <TableHead className="text-center">Taille</TableHead>
                 <TableHead className="text-center">Qté</TableHead>
                 <TableHead>Remarques</TableHead>
+                <TableHead className="text-right text-emerald-700">Gain</TableHead>
                 <TableHead className="text-center">Paiement</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -188,6 +227,17 @@ export function OrdersTable({
                   <TableCell className="text-center font-bold">{order.quantity}</TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-28 truncate">
                     {order.notes ?? '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {(() => {
+                      const gain = getGain(order);
+                      if (!gain) return <span className="text-xs text-muted-foreground">—</span>;
+                      return (
+                        <span className={`text-xs font-semibold ${order.is_paid ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          {formatFCFA(gain)}
+                        </span>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="text-center">
                     {order.is_paid ? (

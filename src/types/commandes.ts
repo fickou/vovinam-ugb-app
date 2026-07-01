@@ -7,6 +7,8 @@ export interface OrderCampaign {
   product_type: string;
   description: string | null;
   price: number;
+  /** Marge bénéficiaire du club par article (FCFA). Prix confectionneur = price - margin */
+  margin: number;
   available_sizes: string[];
   deadline: string | null;
   is_active: boolean;
@@ -37,6 +39,8 @@ export interface CampaignFormData {
   product_type: string;
   description: string;
   price: string;
+  /** Marge du club par article (FCFA) */
+  margin: string;
   available_sizes: string;   // saisie libre séparée par virgules, ex: "S,M,L,XL"
   deadline: string;
   is_active: boolean;
@@ -57,6 +61,7 @@ export const DEFAULT_CAMPAIGN_FORM: CampaignFormData = {
   product_type: 'Lacoste',
   description: '',
   price: '',
+  margin: '',
   available_sizes: 'S, M, L, XL, XXL',
   deadline: '',
   is_active: true,

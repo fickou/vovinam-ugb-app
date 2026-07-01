@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Copy, ExternalLink, Pencil, Power, Trash2, MoreVertical,
-  ShoppingBag, CalendarDays, Tag, Ruler, CheckCheck,
+  ShoppingBag, CalendarDays, Tag, Ruler, CheckCheck, TrendingUp,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { OrderCampaign } from '@/types/commandes';
@@ -138,6 +138,20 @@ export function CampaignCard({ campaign, onEdit, onToggleActive, onDelete }: Pro
             <Tag className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
             <span className="font-semibold text-foreground">{formatPrice(campaign.price)}</span>
           </div>
+
+          {/* Marge */}
+          {campaign.margin > 0 && (
+            <div className="col-span-2 mt-1 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+              <span className="flex items-center gap-1 text-emerald-700">
+                <TrendingUp className="h-3 w-3" />
+                <span>Gain/article : <strong>{formatPrice(campaign.margin)}</strong></span>
+              </span>
+              <span className="flex items-center gap-1 text-slate-500">
+                <span>Confectionneur : <strong>{formatPrice(campaign.price - campaign.margin)}</strong></span>
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
             <Ruler className="h-3.5 w-3.5 flex-shrink-0" />
             <span>{campaign.available_sizes.join(' · ')}</span>
