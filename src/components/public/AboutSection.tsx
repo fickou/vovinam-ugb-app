@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
 import ugbBuilding from '@/assets/ugb-building.png';
-import { cmsApi } from '@/lib/cms';
+import { usePublicSettings } from '@/hooks/usePublicCMS';
 import { AboutContent } from '@/types/cms';
 
 const fallbackAbout: AboutContent = {
@@ -24,19 +23,8 @@ const fallbackAbout: AboutContent = {
 };
 
 export default function AboutSection() {
-    const [data, setData] = useState<AboutContent>(fallbackAbout);
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const settings = await cmsApi.getSettings('about');
-                if (settings) setData(settings);
-            } catch (err) {
-                console.error("Erreur chargement contenu about", err);
-            }
-        };
-        fetchContent();
-    }, []);
+    const { data: settingsData } = usePublicSettings('about');
+    const data = (settingsData || fallbackAbout) as AboutContent;
 
     return (
         <section id="about" className="py-28 sm:py-36 bg-[#0B1120] relative overflow-hidden">

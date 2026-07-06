@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
 import logo from '@/assets/logo.png';
 import vovinamLogo from '@/assets/logo-vovinam.png';
-import { cmsApi } from '@/lib/cms';
+import { usePublicSettings } from '@/hooks/usePublicCMS';
 import { HeroContent } from '@/types/cms';
 
 const fallbackContent: HeroContent = {
@@ -13,21 +12,8 @@ const fallbackContent: HeroContent = {
 };
 
 export default function HeroSection() {
-    const [data, setData] = useState<HeroContent>(fallbackContent);
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const settings = await cmsApi.getSettings('hero');
-                if (settings) {
-                    setData(settings);
-                }
-            } catch (err) {
-                console.error("Erreur chargement contenu hero", err);
-            }
-        };
-        fetchContent();
-    }, []);
+    const { data: settingsData } = usePublicSettings('hero');
+    const data = (settingsData || fallbackContent) as HeroContent;
 
     return (
         <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0f172a]">

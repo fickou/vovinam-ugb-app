@@ -16,22 +16,26 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
     flowType: 'pkce',           // Plus sécurisé que implicite
   },
-  global: {
-    headers: {
-      'x-application-name': 'vovinam-ugb',
-    },
-  },
   db: {
     schema: 'public',
   },
 });
 
 // ── Intercepteur Auth Global
-// Déconnecte proprement l'utilisateur si le token JWT expire et ne peut pas être rafraîchi
+// Déconnecte proprement l'utilisateur si le token JWT expire ou si le refresh échoue
 supabase.auth.onAuthStateChange((event) => {
   if (event === 'TOKEN_REFRESHED') {
-    // Silencieux — le token a été rafraîchi automatiquement
     console.debug('[AUTH] Token rafraîchi avec succès');
+    return;
+  }
+
+  if (event === 'TOKEN_REFRESH_FAILED') {
+    console.warn('[AUTH] Le refresh token a échoué, session invalidée');
+    localStorage.removeItem('supabase.auth.token');
+    if (window.location.pathname.startsWith('/dashboard')) {
+      window.location.href = '/auth';
+    }
+    return;
   }
 
   if (event === 'SIGNED_OUT') {

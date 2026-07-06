@@ -182,13 +182,23 @@ export default function Users() {
 
     if (error) {
       // Extraire le message précis du corps de la réponse HTTP de l'Edge Function
-      try {
-        const errorBody = await (error as any).context?.json();
-        throw new Error(errorBody?.error || error.message || 'Erreur de la fonction');
-      } catch (parseErr: any) {
-        if (parseErr.message && parseErr.message !== 'Erreur de la fonction') throw parseErr;
-        throw new Error(error.message || 'Erreur inconnue');
+      const context = (error as any).context;
+      let message = error.message || 'Erreur de la fonction';
+
+      if (context) {
+        if (typeof context.json === 'function') {
+          try {
+            const body = await context.json();
+            message = body?.error || body?.message || message;
+          } catch {
+            // Ignorer si le corps n'est pas JSON
+          }
+        } else if (typeof context === 'object') {
+          message = (context as any).error || (context as any).message || message;
+        }
       }
+
+      throw new Error(message);
     }
 
     if (data?.error) throw new Error(data.error);
@@ -201,11 +211,25 @@ export default function Users() {
     fetchUsers();
   } catch (e: any) {
     console.error('[ADMIN] Erreur lors de l\'approbation:', e);
-    toast({ 
-      title: 'Échec de validation ❌', 
-      description: e.message || 'Une erreur est survenue lors de la création du compte.', 
-      variant: 'destructive' 
-    });
+    const msg = e?.message || 'Une erreur est survenue lors de la création du compte.';
+
+    // Si l'erreur provient d'un email déjà enregistré, marquer la demande
+    if (typeof msg === 'string' && msg.toLowerCase().includes('already been registered')) {
+      try {
+        await supabase.from('demandes').update({ status: 'duplicate' }).eq('id', d.id);
+        toast({
+          title: 'Échec de validation — Email existant',
+          description: 'Un utilisateur avec cet e‑mail existe déjà. La demande a été marquée comme "duplicate".',
+          variant: 'destructive',
+        });
+        fetchUsers();
+      } catch (uErr) {
+        console.error('[ADMIN] Erreur lors du marquage duplicate:', uErr);
+        toast({ title: 'Échec de validation ❌', description: msg, variant: 'destructive' });
+      }
+    } else {
+      toast({ title: 'Échec de validation ❌', description: msg, variant: 'destructive' });
+    }
   } finally {
     setLoading(false);
   }

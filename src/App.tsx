@@ -11,10 +11,10 @@ import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Profile from "./pages/Profile";
-import MemberDashboard from "./pages/MemberDashboard";
 
 // ── Pages chargées à la demande (code splitting)
+const Profile        = lazy(() => import("./pages/Profile"));
+const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
 const Dashboard      = lazy(() => import("./pages/Dashboard"));
 const Members        = lazy(() => import("./pages/Members"));
 const Seasons        = lazy(() => import("./pages/Seasons"));

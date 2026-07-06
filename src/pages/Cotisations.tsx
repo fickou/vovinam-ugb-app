@@ -37,7 +37,7 @@ export default function Cotisations() {
     const activeList = lists.find(l => l.id === activeListId) || null;
     const cotisationEntriesHook = useCotisationEntries(activeListId);
     const entries: CotisationEntryWithMember[] = cotisationEntriesHook.entries as CotisationEntryWithMember[];
-    const { isLoading: isLoadingEntries, addEntry, deleteEntry } = cotisationEntriesHook;
+    const { isLoading: isLoadingEntries, error: errorEntries, addEntry, deleteEntry } = cotisationEntriesHook;
     const { members } = useMembers();
 
     // Filtre des membres pour la sélection
@@ -317,6 +317,10 @@ export default function Cotisations() {
 
                                 {isLoadingEntries ? (
                                     <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>
+                                ) : errorEntries ? (
+                                    <div className="text-center py-12 text-destructive font-medium">
+                                        Une erreur est survenue lors du chargement : {(errorEntries as any).message || 'Erreur inconnue'}
+                                    </div>
                                 ) : entries.length === 0 ? (
                                     <div className="text-center py-12 text-muted-foreground italic">
                                         Aucune personne dans cette liste. <br /> Cliquez sur "Ajouter" pour commencer.

@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { cmsApi } from '@/lib/cms';
+import { usePublicSettings } from '@/hooks/usePublicCMS';
 import { PhilosophyContent } from '@/types/cms';
 
 const fallbackPhilosophy: PhilosophyContent = {
@@ -11,7 +10,7 @@ const fallbackPhilosophy: PhilosophyContent = {
         'Les **10 principes fondamentaux**, rédigés en 1964, régissent la conduite et la vie de chaque pratiquant, du débutant au maître.'
     ],
     symbols: [
-        { title: 'Devise officielle', value: '« Être fort pour être utile »', sub: 'Mạnh để phục vụ — Le fondement de toute la philosophie Vovinam.', color: '#e5a800' },
+        { title: 'Devise officielle', value: '« Être fort pour être utile »', sub: 'Mạnh de phục vụ — Le fondement de toute la philosophie Vovinam.', color: '#e5a800' },
         { title: 'Salut emblématique', value: '« Main d\'acier sur cœur de bonté »', sub: 'Chí cương · Tâm từ bi — La force au service de la compassion.', color: '#c0392b' },
         { title: 'Philosophie centrale', value: 'Cách Mạng Tâm Thân', sub: '« Révolution du corps et de l\'esprit » — développement holistique de l\'individu.', color: '#27ae60' },
         { title: 'Symbole du bambou', value: '« Plier sans se rompre »', sub: 'Le bambou incarne la droiture, la souplesse, la constance et le désintéressement.', color: '#2980b9' },
@@ -39,19 +38,8 @@ const fallbackPhilosophy: PhilosophyContent = {
 };
 
 export default function PhilosophySection() {
-    const [data, setData] = useState<PhilosophyContent>(fallbackPhilosophy);
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const settings = await cmsApi.getSettings('philosophy');
-                if (settings) setData(settings);
-            } catch (err) {
-                console.error("Erreur chargement contenu philosophy", err);
-            }
-        };
-        fetchContent();
-    }, []);
+    const { data: settingsData } = usePublicSettings('philosophy');
+    const data = (settingsData || fallbackPhilosophy) as PhilosophyContent;
 
     return (
         <section id="philosophy" className="py-28 sm:py-36 bg-[#0E1524] relative overflow-hidden">

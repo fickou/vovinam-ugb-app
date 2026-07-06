@@ -83,17 +83,34 @@ export function useCotisationEntries(listId: string | null) {
   const { toast } = useToast();
   const queryKey = ['cotisation_entries', listId];
 
-  const { data: entries = [], isLoading } = useQuery<CotisationEntryWithMember[]>({
+  const { data: entries = [], isLoading, error } = useQuery<CotisationEntryWithMember[]>({
     queryKey,
     queryFn: async () => {
       if (!listId) return [];
       const { data, error } = await supabase
         .from('cotisation_entries')
-        .select('id, list_id, member_id, first_name, last_name, amount, created_at, created_by')
+        .select(`
+          id, 
+          list_id, 
+          member_id, 
+          first_name, 
+          last_name, 
+          amount, 
+          created_at, 
+          created_by,
+          member:members (
+            first_name,
+            last_name,
+            phone
+          )
+        `)
         .eq('list_id', listId)
         .order('created_at', { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as CotisationEntryWithMember[];
+      if (error) {
+        console.error('Error fetching cotisation entries:', error);
+        throw error;
+      }
+      return (data ?? []) as any[];
     },
     enabled: !!listId,
   });
@@ -116,7 +133,10 @@ export function useCotisationEntries(listId: string | null) {
       qc.invalidateQueries({ queryKey });
       toast({ title: 'Cotisation ajoutée' });
     },
-    onError: (err: any) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
+    onError: (err: any) => {
+      console.error('Error adding cotisation entry:', err);
+      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+    },
   });
 
   const deleteEntryMutation = useMutation({
@@ -131,12 +151,16 @@ export function useCotisationEntries(listId: string | null) {
       qc.invalidateQueries({ queryKey });
       toast({ title: 'Cotisation supprimée' });
     },
-    onError: (err: any) => toast({ title: 'Erreur', description: err.message, variant: 'destructive' }),
+    onError: (err: any) => {
+      console.error('Error deleting cotisation entry:', err);
+      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+    },
   });
 
   return {
     entries: (entries ?? []) as CotisationEntryWithMember[],
     isLoading,
+    error,
     addEntry: (data: any) => addEntryMutation.mutateAsync(data),
     deleteEntry: (id: string) => deleteEntryMutation.mutateAsync(id),
     isMutating: addEntryMutation.isPending || deleteEntryMutation.isPending,

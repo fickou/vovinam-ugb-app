@@ -24,6 +24,5 @@ export interface CotisationEntryWithMember extends CotisationEntry {
     first_name: string;
     last_name: string;
     phone: string;
-    grade: string;
   };
 }

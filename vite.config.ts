@@ -22,4 +22,20 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('recharts')) return 'vendor-recharts';
+          if (id.includes('jspdf')) return 'vendor-jspdf';
+          if (id.includes('html2canvas')) return 'vendor-html2canvas';
+          if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
+          if (id.includes('react-router-dom')) return 'vendor-react-router';
+          if (id.includes('react-dom') || id.includes('react')) return 'vendor-react';
+          return 'vendor';
+        },
+      },
+    },
+  },
 }));

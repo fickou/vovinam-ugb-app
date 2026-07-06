@@ -1,27 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
-import { cmsApi } from '@/lib/cms';
-import { GalleryImage } from '@/types/cms';
+import { usePublicGallery } from '@/hooks/usePublicCMS';
+import type { GalleryImage } from '@/types/cms';
 
 export default function GallerySection() {
-    const [images, setImages] = useState<GalleryImage[]>([]);
+    const { data: images = [], isLoading, error } = usePublicGallery();
     const [lb, setLb] = useState<GalleryImage | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [expandedCats, setExpandedCats] = useState<string[]>([]);
 
-    useEffect(() => {
-        const fetchGallery = async () => {
-            try {
-                const data = await cmsApi.getGallery();
-                setImages(data || []);
-            } catch (err) {
-                console.error("Erreur chargement galerie", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchGallery();
-    }, []);
+    if (error) {
+      console.error('Erreur chargement galerie', error);
+    }
 
     const scrollToCategory = (cat: string) => {
         if (cat === 'Tous') {
@@ -80,6 +69,10 @@ export default function GallerySection() {
                 {isLoading ? (
                     <div className="py-20 flex justify-center items-center">
                         <Loader2 className="w-8 h-8 text-[#e5a800] animate-spin" />
+                    </div>
+                ) : error ? (
+                    <div className="py-20 text-center text-destructive font-medium">
+                        Impossible de charger la galerie. Veuillez réessayer plus tard.
                     </div>
                 ) : images.length === 0 ? (
                     <div className="py-20 text-center text-white/50 border-2 border-dashed border-white/5 rounded-3xl">
