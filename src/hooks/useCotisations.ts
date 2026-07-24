@@ -94,7 +94,8 @@ export function useCotisationEntries(listId: string | null) {
           list_id, 
           member_id, 
           first_name, 
-          last_name, 
+          last_name,
+          club,
           amount, 
           created_at, 
           created_by,
@@ -121,6 +122,7 @@ export function useCotisationEntries(listId: string | null) {
       member_id: string | null;
       first_name: string;
       last_name: string;
+      club: string;
       amount: number;
       created_by: string;
     }) => {
@@ -157,12 +159,32 @@ export function useCotisationEntries(listId: string | null) {
     },
   });
 
+  const updateEntryMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { member_id: string | null; first_name: string; last_name: string; club: string; amount: number } }) => {
+      const { error } = await supabase
+        .from('cotisation_entries')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey });
+      toast({ title: 'Cotisation mise à jour' });
+    },
+    onError: (err: any) => {
+      console.error('Error updating cotisation entry:', err);
+      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+    },
+  });
+
   return {
     entries: (entries ?? []) as CotisationEntryWithMember[],
     isLoading,
     error,
     addEntry: (data: any) => addEntryMutation.mutateAsync(data),
     deleteEntry: (id: string) => deleteEntryMutation.mutateAsync(id),
-    isMutating: addEntryMutation.isPending || deleteEntryMutation.isPending,
+    updateEntry: (id: string, data: { member_id: string | null; first_name: string; last_name: string; club: string; amount: number }) =>
+      updateEntryMutation.mutateAsync({ id, data }),
+    isMutating: addEntryMutation.isPending || deleteEntryMutation.isPending || updateEntryMutation.isPending,
   };
 }

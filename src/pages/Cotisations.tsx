@@ -4,13 +4,12 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Download, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Download, Trash2, Loader2, Pencil } from 'lucide-react';
 import vovinamLogo from '@/assets/logo-vovinam.png';
 import clubLogo from '@/assets/logo.png';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useCotisations, useCotisationEntries } from '@/hooks/useCotisations';
-import { useMembers } from '@/hooks/useMembers';
 import { useAuth } from '@/hooks/useAuth';
 import type { CotisationList, CotisationEntryWithMember } from '@/types/cotisations';
 
@@ -28,23 +27,23 @@ export default function Cotisations() {
     const printRef = useRef<HTMLDivElement>(null);
 
     // Formulaire d'ajout
-    const [selectedMemberId, setSelectedMemberId] = useState<string>('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [club, setClub] = useState('');
     const [amount, setAmount] = useState<string>('');
-    const [memberSearch, setMemberSearch] = useState('');
+
+    // Formulaire d'édition
+    const [editingEntry, setEditingEntry] = useState<CotisationEntryWithMember | null>(null);
+    const [editFirstName, setEditFirstName] = useState('');
+    const [editLastName, setEditLastName] = useState('');
+    const [editClub, setEditClub] = useState('');
+    const [editAmount, setEditAmount] = useState<string>('');
 
     const activeList = lists.find(l => l.id === activeListId) || null;
     const cotisationEntriesHook = useCotisationEntries(activeListId);
     const entries: CotisationEntryWithMember[] = cotisationEntriesHook.entries as CotisationEntryWithMember[];
-    const { isLoading: isLoadingEntries, error: errorEntries, addEntry, deleteEntry } = cotisationEntriesHook;
-    const { members } = useMembers();
-
-    // Filtre des membres pour la sélection
-    const filteredMembers = members.filter(m => 
-        m.first_name.toLowerCase().includes(memberSearch.toLowerCase()) || 
-        m.last_name.toLowerCase().includes(memberSearch.toLowerCase())
-    ).slice(0, 5); // limite pour pas surcharger le menu
+    const { isLoading: isLoadingEntries, error: errorEntries, addEntry, deleteEntry, updateEntry, isMutating: isMutatingEntries } = cotisationEntriesHook;
+    const { members: _unusedMembers } = { members: [] }; // members no longer needed
 
     useEffect(() => {
         if (!activeListId && lists.length > 0) {
@@ -92,17 +91,18 @@ export default function Cotisations() {
 
         await addEntry({
             list_id: activeListId,
-            member_id: selectedMemberId || null,
+            member_id: null,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
+            club: club.trim(),
             amount: parseFloat(amount) || 0,
             created_by: user.id
         });
 
         setFirstName('');
         setLastName('');
+        setClub('');
         setAmount('');
-        setSelectedMemberId('');
         setIsDialogOpen(false);
     };
 
@@ -110,6 +110,27 @@ export default function Cotisations() {
         if (window.confirm("Supprimer cette entrée ?")) {
             await deleteEntry(entryId);
         }
+    };
+
+    const openEditDialog = (entry: CotisationEntryWithMember) => {
+        setEditingEntry(entry);
+        setEditFirstName(entry.first_name);
+        setEditLastName(entry.last_name);
+        setEditClub(entry.club ?? '');
+        setEditAmount(entry.amount > 0 ? String(entry.amount) : '');
+    };
+
+    const handleEditEntry = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingEntry || !editFirstName.trim() || !editLastName.trim()) return;
+        await updateEntry(editingEntry.id, {
+            member_id: null,
+            first_name: editFirstName.trim(),
+            last_name: editLastName.trim(),
+            club: editClub.trim(),
+            amount: parseFloat(editAmount) || 0,
+        });
+        setEditingEntry(null);
     };
 
     const handleDeleteList = async (id: string) => {
@@ -221,53 +242,21 @@ export default function Cotisations() {
                                                 <DialogTitle>Ajouter à "{activeList.title}"</DialogTitle>
                                             </DialogHeader>
                                             <form onSubmit={handleAddEntry} className="space-y-4 pt-4">
-                                                <div className="space-y-2 relative">
-                                                    <Label>Lier à un pratiquant du club (Optionnel)</Label>
-                                                    <div className="relative">
-                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                        <Input 
-                                                            placeholder="Rechercher un membre..." 
-                                                            className="pl-9"
-                                                            value={memberSearch}
-                                                            onChange={e => setMemberSearch(e.target.value)}
-                                                        />
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Prénom</Label>
+                                                        <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Jean" required />
                                                     </div>
-                                                    {memberSearch && (
-                                                        <div className="absolute z-50 w-full bg-white border shadow-lg rounded-md mt-1 top-full max-h-48 overflow-auto">
-                                                            {filteredMembers.map(m => (
-                                                                <div 
-                                                                    key={m.id} 
-                                                                    className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
-                                                                    onClick={() => handleMemberSelect(m.id)}
-                                                                >
-                                                                    {m.first_name} {m.last_name}
-                                                                </div>
-                                                            ))}
-                                                            {filteredMembers.length === 0 && (
-                                                                <div className="px-3 py-2 text-sm text-muted-foreground">Aucun membre trouvé</div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {selectedMemberId && (
-                                                        <div className="flex items-center justify-between bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded text-sm mt-2">
-                                                            <span>Membre sélectionné : <strong>{firstName} {lastName}</strong></span>
-                                                            <button type="button" onClick={() => handleMemberSelect('')} className="text-emerald-900 hover:underline">Annuler</button>
-                                                        </div>
-                                                    )}
+                                                    <div className="space-y-2">
+                                                        <Label>Nom</Label>
+                                                        <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Dupont" required />
+                                                    </div>
                                                 </div>
-                                                
-                                                {!selectedMemberId && (
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="space-y-2">
-                                                            <Label>Prénom</Label>
-                                                            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Jean" required />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <Label>Nom</Label>
-                                                            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Dupont" required />
-                                                        </div>
-                                                    </div>
-                                                )}
+
+                                                <div className="space-y-2">
+                                                    <Label>Club</Label>
+                                                    <Input value={club} onChange={(e) => setClub(e.target.value)} placeholder="Ex: Vovinam UGB" />
+                                                </div>
 
                                                 <div className="space-y-2">
                                                     <Label>Montant (FCFA)</Label>
@@ -333,31 +322,45 @@ export default function Cotisations() {
                                                     <TableHead className="w-16 font-bold text-center">N°</TableHead>
                                                     <TableHead className="font-bold">Prénom</TableHead>
                                                     <TableHead className="font-bold">Nom</TableHead>
+                                                    <TableHead className="font-bold">Club</TableHead>
                                                     <TableHead className="font-bold text-right">Montant</TableHead>
-                                                    <TableHead className="text-right font-bold w-16" data-html2canvas-ignore>Actions</TableHead>
+                                                    <TableHead className="text-right font-bold w-24" data-html2canvas-ignore>Actions</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {entries.map((entry, index) => (
-                                                    <TableRow key={entry.id} className="transition-none hover:bg-transparent">
+                                                    <TableRow key={entry.id} className="transition-none hover:bg-muted/30">
                                                         <TableCell className="font-medium text-center">{index + 1}</TableCell>
-                                                        <TableCell className="capitalize">{entry.member ? entry.member.first_name : entry.first_name}</TableCell>
-                                                        <TableCell className="font-bold uppercase">{entry.member ? entry.member.last_name : entry.last_name}</TableCell>
+                                                        <TableCell className="capitalize">{entry.first_name}</TableCell>
+                                                        <TableCell className="font-bold uppercase">{entry.last_name}</TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">{entry.club || '—'}</TableCell>
                                                         <TableCell className="text-right font-medium text-navy">{entry.amount > 0 ? formatFCFA(entry.amount) : '—'}</TableCell>
                                                         <TableCell className="text-right" data-html2canvas-ignore>
-                                                            <Button
-                                                                variant="ghost" size="icon"
-                                                                onClick={() => handleDeleteEntry(entry.id)}
-                                                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <Button
+                                                                    variant="ghost" size="icon"
+                                                                    onClick={() => openEditDialog(entry)}
+                                                                    className="h-8 w-8 text-navy hover:bg-navy/10"
+                                                                    title="Modifier"
+                                                                >
+                                                                    <Pencil className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost" size="icon"
+                                                                    onClick={() => handleDeleteEntry(entry.id)}
+                                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                                    title="Supprimer"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
                                                 {totalAmount > 0 && (
                                                     <TableRow className="bg-emerald-50/50 hover:bg-emerald-50/50">
                                                         <TableCell colSpan={3} className="text-right font-bold text-emerald-800">TOTAL</TableCell>
+                                                        <TableCell></TableCell>
                                                         <TableCell className="text-right font-bold text-emerald-700 text-lg">{formatFCFA(totalAmount)}</TableCell>
                                                         <TableCell data-html2canvas-ignore></TableCell>
                                                     </TableRow>
@@ -371,6 +374,44 @@ export default function Cotisations() {
                     )}
                 </div>
             </div>
+
+            {/* Dialog de modification d'une entrée */}
+            {editingEntry && (
+                <Dialog open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Modifier l'entrée</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleEditEntry} className="space-y-4 pt-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Prénom</Label>
+                                    <Input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Nom</Label>
+                                    <Input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} required />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Club</Label>
+                                <Input value={editClub} onChange={(e) => setEditClub(e.target.value)} placeholder="Ex: Vovinam UGB" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Montant (FCFA)</Label>
+                                <Input type="number" min="0" step="100" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Ex: 5000" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditingEntry(null)}>Annuler</Button>
+                                <Button type="submit" className="flex-1 bg-navy hover:bg-navy-light" disabled={isMutatingEntries}>
+                                    {isMutatingEntries && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                    Enregistrer
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )}
         </DashboardLayout>
     );
 }

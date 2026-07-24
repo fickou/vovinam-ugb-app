@@ -13,6 +13,7 @@ export interface CotisationEntry {
   member_id: string | null;  // null if external person
   first_name: string;
   last_name: string;
+  club: string;
   amount: number;
   created_at: string;
   created_by: string;
