@@ -9,9 +9,10 @@ import vovinamLogo from '@/assets/logo-vovinam.png';
 import clubLogo from '@/assets/logo.png';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { useCotisations, useCotisationEntries } from '@/hooks/useCotisations';
+import { useCotisations, useCotisationEntries, useCotisationExpenses } from '@/hooks/useCotisations';
 import { useAuth } from '@/hooks/useAuth';
-import type { CotisationList, CotisationEntryWithMember } from '@/types/cotisations';
+import type { CotisationList, CotisationEntryWithMember, CotisationExpense } from '@/types/cotisations';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Cotisations() {
     const { user } = useAuth();
@@ -44,6 +45,18 @@ export default function Cotisations() {
     const entries: CotisationEntryWithMember[] = cotisationEntriesHook.entries as CotisationEntryWithMember[];
     const { isLoading: isLoadingEntries, error: errorEntries, addEntry, deleteEntry, updateEntry, isMutating: isMutatingEntries } = cotisationEntriesHook;
     const { members: _unusedMembers } = { members: [] }; // members no longer needed
+
+    // Dépenses state
+    const { expenses, isLoading: isLoadingExpenses, error: errorExpenses, addExpense, deleteExpense, updateExpense, isMutating: isMutatingExpenses } = useCotisationExpenses(activeListId);
+    const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+    const [expenseDesc, setExpenseDesc] = useState('');
+    const [expenseAmount, setExpenseAmount] = useState('');
+    const [expenseDate, setExpenseDate] = useState('');
+
+    const [editingExpense, setEditingExpense] = useState<CotisationExpense | null>(null);
+    const [editExpenseDesc, setEditExpenseDesc] = useState('');
+    const [editExpenseAmount, setEditExpenseAmount] = useState('');
+    const [editExpenseDate, setEditExpenseDate] = useState('');
 
     useEffect(() => {
         if (!activeListId && lists.length > 0) {
@@ -140,6 +153,48 @@ export default function Cotisations() {
         }
     };
 
+    const handleAddExpense = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!expenseDesc.trim() || !activeListId || !user) return;
+        
+        await addExpense({
+            list_id: activeListId,
+            description: expenseDesc.trim(),
+            amount: parseFloat(expenseAmount) || 0,
+            date: expenseDate || new Date().toISOString().split('T')[0],
+            created_by: user.id
+        });
+        
+        setExpenseDesc('');
+        setExpenseAmount('');
+        setExpenseDate('');
+        setIsExpenseDialogOpen(false);
+    };
+
+    const handleDeleteExpense = async (expenseId: string) => {
+        if (window.confirm("Supprimer cette dépense ?")) {
+            await deleteExpense(expenseId);
+        }
+    };
+
+    const openEditExpenseDialog = (expense: CotisationExpense) => {
+        setEditingExpense(expense);
+        setEditExpenseDesc(expense.description);
+        setEditExpenseAmount(expense.amount > 0 ? String(expense.amount) : '');
+        setEditExpenseDate(expense.date);
+    };
+
+    const handleEditExpense = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingExpense || !editExpenseDesc.trim()) return;
+        await updateExpense(editingExpense.id, {
+            description: editExpenseDesc.trim(),
+            amount: parseFloat(editExpenseAmount) || 0,
+            date: editExpenseDate || editingExpense.date,
+        });
+        setEditingExpense(null);
+    };
+
     const handleDownloadPNG = async () => {
         if (!printRef.current) return;
         try {
@@ -155,6 +210,8 @@ export default function Cotisations() {
     };
 
     const totalAmount = entries.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const solde = totalAmount - totalExpenses;
     const formatFCFA = (n: number) => new Intl.NumberFormat('fr-SN', { maximumFractionDigits: 0 }).format(n) + ' FCFA';
 
     return (
@@ -231,46 +288,7 @@ export default function Cotisations() {
                                     <h1 className="text-3xl font-display font-bold text-navy">Gestion des cotisations</h1>
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
-                                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button className="bg-navy hover:bg-navy-light flex-1 sm:flex-none">
-                                                <Plus className="h-4 w-4 mr-2" /> Ajouter
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-md overflow-visible">
-                                            <DialogHeader>
-                                                <DialogTitle>Ajouter à "{activeList.title}"</DialogTitle>
-                                            </DialogHeader>
-                                            <form onSubmit={handleAddEntry} className="space-y-4 pt-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label>Prénom</Label>
-                                                        <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Jean" required />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Nom</Label>
-                                                        <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Dupont" required />
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <Label>Club</Label>
-                                                    <Input value={club} onChange={(e) => setClub(e.target.value)} placeholder="Ex: Vovinam UGB" />
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    <Label>Montant (FCFA)</Label>
-                                                    <Input type="number" min="0" step="100" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex: 5000" />
-                                                </div>
-
-                                                <Button type="submit" className="w-full bg-navy hover:bg-navy-light" disabled={isMutating}>
-                                                    {isMutating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                                    Enregistrer
-                                                </Button>
-                                            </form>
-                                        </DialogContent>
-                                    </Dialog>
-                                    <Button onClick={handleDownloadPNG} variant="outline" className="flex-1 sm:flex-none" disabled={entries.length === 0}>
+                                    <Button onClick={handleDownloadPNG} variant="outline" className="flex-1 sm:flex-none" disabled={entries.length === 0 && expenses.length === 0}>
                                         <Download className="h-4 w-4 mr-2" /> Télécharger
                                     </Button>
                                 </div>
@@ -304,71 +322,216 @@ export default function Cotisations() {
                                     <img src={vovinamLogo} alt="Logo Vovinam" className="h-16 sm:h-24 w-auto object-contain" />
                                 </div>
 
-                                {isLoadingEntries ? (
-                                    <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>
-                                ) : errorEntries ? (
-                                    <div className="text-center py-12 text-destructive font-medium">
-                                        Une erreur est survenue lors du chargement : {(errorEntries as any).message || 'Erreur inconnue'}
+                                {/* Résumé Financier */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center" data-html2canvas-ignore={false}>
+                                    <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+                                        <p className="text-sm text-emerald-600 font-medium mb-1">Total Entrées</p>
+                                        <p className="text-2xl font-bold text-emerald-700">{formatFCFA(totalAmount)}</p>
                                     </div>
-                                ) : entries.length === 0 ? (
-                                    <div className="text-center py-12 text-muted-foreground italic">
-                                        Aucune personne dans cette liste. <br /> Cliquez sur "Ajouter" pour commencer.
+                                    <div className="bg-red-50 rounded-lg p-4 border border-red-100">
+                                        <p className="text-sm text-red-600 font-medium mb-1">Total Dépenses</p>
+                                        <p className="text-2xl font-bold text-red-700">{formatFCFA(totalExpenses)}</p>
                                     </div>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow className="bg-muted/50 transition-none">
-                                                    <TableHead className="w-16 font-bold text-center">N°</TableHead>
-                                                    <TableHead className="font-bold">Prénom</TableHead>
-                                                    <TableHead className="font-bold">Nom</TableHead>
-                                                    <TableHead className="font-bold">Club</TableHead>
-                                                    <TableHead className="font-bold text-right">Montant</TableHead>
-                                                    <TableHead className="text-right font-bold w-24" data-html2canvas-ignore>Actions</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {entries.map((entry, index) => (
-                                                    <TableRow key={entry.id} className="transition-none hover:bg-muted/30">
-                                                        <TableCell className="font-medium text-center">{index + 1}</TableCell>
-                                                        <TableCell className="capitalize">{entry.first_name}</TableCell>
-                                                        <TableCell className="font-bold uppercase">{entry.last_name}</TableCell>
-                                                        <TableCell className="text-sm text-muted-foreground">{entry.club || '—'}</TableCell>
-                                                        <TableCell className="text-right font-medium text-navy">{entry.amount > 0 ? formatFCFA(entry.amount) : '—'}</TableCell>
-                                                        <TableCell className="text-right" data-html2canvas-ignore>
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                <Button
-                                                                    variant="ghost" size="icon"
-                                                                    onClick={() => openEditDialog(entry)}
-                                                                    className="h-8 w-8 text-navy hover:bg-navy/10"
-                                                                    title="Modifier"
-                                                                >
-                                                                    <Pencil className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost" size="icon"
-                                                                    onClick={() => handleDeleteEntry(entry.id)}
-                                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                                                    title="Supprimer"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
+                                    <div className={`rounded-lg p-4 border ${solde >= 0 ? 'bg-navy/5 border-navy/10' : 'bg-red-50 border-red-100'}`}>
+                                        <p className={`text-sm font-medium mb-1 ${solde >= 0 ? 'text-navy' : 'text-red-600'}`}>Solde Actuel</p>
+                                        <p className={`text-2xl font-bold ${solde >= 0 ? 'text-navy' : 'text-red-700'}`}>{formatFCFA(solde)}</p>
+                                    </div>
+                                </div>
+
+                                <Tabs defaultValue="cotisations" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2 mb-6" data-html2canvas-ignore>
+                                        <TabsTrigger value="cotisations">Entrées ({entries.length})</TabsTrigger>
+                                        <TabsTrigger value="expenses">Dépenses ({expenses.length})</TabsTrigger>
+                                    </TabsList>
+                                    
+                                    <TabsContent value="cotisations" className="space-y-4">
+                                        <div className="flex justify-end" data-html2canvas-ignore>
+                                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button className="bg-navy hover:bg-navy-light">
+                                                        <Plus className="h-4 w-4 mr-2" /> Ajouter une entrée
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-md overflow-visible">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Ajouter à "{activeList.title}"</DialogTitle>
+                                                    </DialogHeader>
+                                                    <form onSubmit={handleAddEntry} className="space-y-4 pt-4">
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="space-y-2">
+                                                                <Label>Prénom</Label>
+                                                                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ex: Jean" required />
                                                             </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                                {totalAmount > 0 && (
-                                                    <TableRow className="bg-emerald-50/50 hover:bg-emerald-50/50">
-                                                        <TableCell colSpan={3} className="text-right font-bold text-emerald-800">TOTAL</TableCell>
-                                                        <TableCell></TableCell>
-                                                        <TableCell className="text-right font-bold text-emerald-700 text-lg">{formatFCFA(totalAmount)}</TableCell>
-                                                        <TableCell data-html2canvas-ignore></TableCell>
-                                                    </TableRow>
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-                                )}
+                                                            <div className="space-y-2">
+                                                                <Label>Nom</Label>
+                                                                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Ex: Dupont" required />
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Club</Label>
+                                                            <Input value={club} onChange={(e) => setClub(e.target.value)} placeholder="Ex: Vovinam UGB" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Montant (FCFA)</Label>
+                                                            <Input type="number" min="0" step="1" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex: 5000" />
+                                                        </div>
+                                                        <Button type="submit" className="w-full bg-navy hover:bg-navy-light" disabled={isMutatingEntries}>
+                                                            {isMutatingEntries && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                                            Enregistrer
+                                                        </Button>
+                                                    </form>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+
+                                        {isLoadingEntries ? (
+                                            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>
+                                        ) : errorEntries ? (
+                                            <div className="text-center py-12 text-destructive font-medium">
+                                                Une erreur est survenue lors du chargement : {(errorEntries as any).message || 'Erreur inconnue'}
+                                            </div>
+                                        ) : entries.length === 0 ? (
+                                            <div className="text-center py-12 text-muted-foreground italic">
+                                                Aucune entrée dans cette liste. <br /> Cliquez sur "Ajouter" pour commencer.
+                                            </div>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-muted/50 transition-none">
+                                                            <TableHead className="w-16 font-bold text-center">N°</TableHead>
+                                                            <TableHead className="font-bold">Prénom</TableHead>
+                                                            <TableHead className="font-bold">Nom</TableHead>
+                                                            <TableHead className="font-bold">Club</TableHead>
+                                                            <TableHead className="font-bold text-right">Montant</TableHead>
+                                                            <TableHead className="text-right font-bold w-24" data-html2canvas-ignore>Actions</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {entries.map((entry, index) => (
+                                                            <TableRow key={entry.id} className="transition-none hover:bg-muted/30">
+                                                                <TableCell className="font-medium text-center">{index + 1}</TableCell>
+                                                                <TableCell className="capitalize">{entry.first_name}</TableCell>
+                                                                <TableCell className="font-bold uppercase">{entry.last_name}</TableCell>
+                                                                <TableCell className="text-sm text-muted-foreground">{entry.club || '—'}</TableCell>
+                                                                <TableCell className="text-right font-medium text-navy">{entry.amount > 0 ? formatFCFA(entry.amount) : '—'}</TableCell>
+                                                                <TableCell className="text-right" data-html2canvas-ignore>
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(entry)} className="h-8 w-8 text-navy hover:bg-navy/10" title="Modifier">
+                                                                            <Pencil className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteEntry(entry.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Supprimer">
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                        {totalAmount > 0 && (
+                                                            <TableRow className="bg-emerald-50/50 hover:bg-emerald-50/50">
+                                                                <TableCell colSpan={3} className="text-right font-bold text-emerald-800">TOTAL</TableCell>
+                                                                <TableCell></TableCell>
+                                                                <TableCell className="text-right font-bold text-emerald-700 text-lg">{formatFCFA(totalAmount)}</TableCell>
+                                                                <TableCell data-html2canvas-ignore></TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="expenses" className="space-y-4">
+                                        <div className="flex justify-end" data-html2canvas-ignore>
+                                            <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button className="bg-red-600 hover:bg-red-700 text-white">
+                                                        <Plus className="h-4 w-4 mr-2" /> Ajouter une dépense
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-md overflow-visible">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Ajouter une dépense à "{activeList.title}"</DialogTitle>
+                                                    </DialogHeader>
+                                                    <form onSubmit={handleAddExpense} className="space-y-4 pt-4">
+                                                        <div className="space-y-2">
+                                                            <Label>Description</Label>
+                                                            <Input value={expenseDesc} onChange={(e) => setExpenseDesc(e.target.value)} placeholder="Ex: Achat boissons, Transport..." required />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="space-y-2">
+                                                                <Label>Date</Label>
+                                                                <Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <Label>Montant (FCFA)</Label>
+                                                                <Input type="number" min="0" step="1" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="Ex: 5000" required />
+                                                            </div>
+                                                        </div>
+                                                        <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white" disabled={isMutatingExpenses}>
+                                                            {isMutatingExpenses && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                                            Enregistrer la dépense
+                                                        </Button>
+                                                    </form>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+
+                                        {isLoadingExpenses ? (
+                                            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>
+                                        ) : errorExpenses ? (
+                                            <div className="text-center py-12 text-destructive font-medium">
+                                                Une erreur est survenue lors du chargement : {(errorExpenses as any).message || 'Erreur inconnue'}
+                                            </div>
+                                        ) : expenses.length === 0 ? (
+                                            <div className="text-center py-12 text-muted-foreground italic">
+                                                Aucune dépense enregistrée.
+                                            </div>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-muted/50 transition-none">
+                                                            <TableHead className="w-16 font-bold text-center">N°</TableHead>
+                                                            <TableHead className="font-bold">Date</TableHead>
+                                                            <TableHead className="font-bold">Description</TableHead>
+                                                            <TableHead className="font-bold text-right">Montant</TableHead>
+                                                            <TableHead className="text-right font-bold w-24" data-html2canvas-ignore>Actions</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {expenses.map((expense, index) => (
+                                                            <TableRow key={expense.id} className="transition-none hover:bg-muted/30">
+                                                                <TableCell className="font-medium text-center">{index + 1}</TableCell>
+                                                                <TableCell>{new Date(expense.date).toLocaleDateString('fr-FR')}</TableCell>
+                                                                <TableCell className="font-medium">{expense.description}</TableCell>
+                                                                <TableCell className="text-right font-medium text-red-600">{expense.amount > 0 ? formatFCFA(expense.amount) : '—'}</TableCell>
+                                                                <TableCell className="text-right" data-html2canvas-ignore>
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <Button variant="ghost" size="icon" onClick={() => openEditExpenseDialog(expense)} className="h-8 w-8 text-navy hover:bg-navy/10" title="Modifier">
+                                                                            <Pencil className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Supprimer">
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                        {totalExpenses > 0 && (
+                                                            <TableRow className="bg-red-50/50 hover:bg-red-50/50">
+                                                                <TableCell colSpan={2} className="text-right font-bold text-red-800">TOTAL</TableCell>
+                                                                <TableCell></TableCell>
+                                                                <TableCell className="text-right font-bold text-red-700 text-lg">{formatFCFA(totalExpenses)}</TableCell>
+                                                                <TableCell data-html2canvas-ignore></TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        )}
+                                    </TabsContent>
+                                </Tabs>
                             </div>
                         </>
                     )}
@@ -399,12 +562,46 @@ export default function Cotisations() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Montant (FCFA)</Label>
-                                <Input type="number" min="0" step="100" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Ex: 5000" />
+                                <Input type="number" min="0" step="1" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Ex: 5000" />
                             </div>
                             <div className="flex gap-2">
                                 <Button type="button" variant="outline" className="flex-1" onClick={() => setEditingEntry(null)}>Annuler</Button>
                                 <Button type="submit" className="flex-1 bg-navy hover:bg-navy-light" disabled={isMutatingEntries}>
                                     {isMutatingEntries && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                    Enregistrer
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* Dialog de modification d'une dépense */}
+            {editingExpense && (
+                <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Modifier la dépense</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleEditExpense} className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                                <Label>Description</Label>
+                                <Input value={editExpenseDesc} onChange={(e) => setEditExpenseDesc(e.target.value)} required />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Date</Label>
+                                    <Input type="date" value={editExpenseDate} onChange={(e) => setEditExpenseDate(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Montant (FCFA)</Label>
+                                    <Input type="number" min="0" step="1" value={editExpenseAmount} onChange={(e) => setEditExpenseAmount(e.target.value)} required />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditingExpense(null)}>Annuler</Button>
+                                <Button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white" disabled={isMutatingExpenses}>
+                                    {isMutatingExpenses && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                                     Enregistrer
                                 </Button>
                             </div>

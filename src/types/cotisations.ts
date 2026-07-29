@@ -27,3 +27,13 @@ export interface CotisationEntryWithMember extends CotisationEntry {
     phone: string;
   };
 }
+
+export interface CotisationExpense {
+  id: string;
+  list_id: string;
+  description: string;
+  amount: number;
+  date: string;
+  created_at: string;
+  created_by: string;
+}
